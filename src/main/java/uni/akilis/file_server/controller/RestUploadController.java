@@ -49,7 +49,7 @@ public class RestUploadController {
     }
 
     @GetMapping("/files/{fileId:.+}")
-    public ResponseEntity<Resource> getFile(@PathVariable long fileId) {
+    public ResponseEntity<Resource> getFile(@PathVariable int fileId) {
         Resource file = storageService.loadFile(fileId);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")

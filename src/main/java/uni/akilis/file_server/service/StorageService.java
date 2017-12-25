@@ -59,7 +59,7 @@ public class StorageService {
      * @param fileId
      * @return
      */
-    public Resource loadFile(long fileId) {
+    public Resource loadFile(int fileId) {
         try {
             String filename = this.iDao.getFilenameById(fileId);
             Path file = rootLocation.resolve(filename);

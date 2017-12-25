@@ -8,6 +8,12 @@ import java.io.Serializable;
 public class FileInfo implements Serializable{
     private int userId;
 
+    public FileInfo(){}
+
+    public FileInfo(int id) {
+        this.userId = id;
+    }
+
     // getter and setter
 
     public int getUserId() {

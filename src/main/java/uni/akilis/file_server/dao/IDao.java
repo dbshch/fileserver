@@ -2,6 +2,7 @@ package uni.akilis.file_server.dao;
 
 import uni.akilis.file_server.dto.FileInfo;
 import uni.akilis.file_server.dto.FileRecordDto;
+import uni.akilis.file_server.entity.UploadFile;
 
 import java.util.List;
 
@@ -16,18 +17,29 @@ public interface IDao {
      * @param filename
      * @param fileInfo
      */
-    void saveFile(long time, String originName, String filename, FileInfo fileInfo);
+    UploadFile saveFile(long time, String originName, String filename, FileInfo fileInfo);
 
     /**
      * Get the archived file name by its id.
      * @param fileId
      * @return
      */
-    String getFilenameById(long fileId);
+    String getFilenameById(int fileId);
 
     /**
      * List all files.
      * @return
      */
     List<FileRecordDto> findAllFiles();
+
+    /**
+     * Clear file records.
+     */
+    void clearFileDb();
+
+    /**
+     * Get files number.
+     * @return
+     */
+    int countFiles();
 }
