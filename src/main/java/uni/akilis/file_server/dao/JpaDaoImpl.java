@@ -7,7 +7,6 @@ import uni.akilis.file_server.dto.FileRecordDto;
 import uni.akilis.file_server.entity.UploadFile;
 import uni.akilis.file_server.repository.UploadFileRepo;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -27,7 +26,7 @@ public class JpaDaoImpl implements IDao{
 
     @Override
     public String getFilenameById(int fileId) {
-        return this.uploadFileRepo.findFilenameById(fileId);
+        return this.uploadFileRepo.findFilenameById(fileId).getFilename();
     }
 
     @Override

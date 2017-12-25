@@ -45,6 +45,7 @@ public class StorageService {
             long time = System.currentTimeMillis();
             String originName = file.getOriginalFilename();
             String filename = time + "_" + originName;
+            log.debug("File abs path: {}", this.rootLocation.resolve(filename).toAbsolutePath().toString());
             Files.copy(file.getInputStream(), this.rootLocation.resolve(filename));
             this.iDao.saveFile(time, originName, filename, fileInfo);
             return filename;
@@ -79,7 +80,8 @@ public class StorageService {
      */
     public void init() {
         try {
-            Files.createDirectory(rootLocation);
+            if(!Files.exists(rootLocation))
+                Files.createDirectory(rootLocation);
         } catch (IOException e) {
             throw new RuntimeException("Could not initialize storage!");
         }

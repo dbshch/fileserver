@@ -5,4 +5,5 @@ package uni.akilis.file_server.util;
  */
 public class Consts {
     public static final String UPLOAD_DIR = "upload-dir";
+    public static final String UP_DOWN_PATH = "/updown/";
 }

@@ -1,5 +1,36 @@
-$(document).ready(function () {
+var fileTable = null;
+var UP_DOWN_PATH = "/updown/";
+var GET_ALL_FILES_PATH = UP_DOWN_PATH + "getallfiles";
+var UPLOAD_FILE_PATH  = UP_DOWN_PATH + "api/uploadfile";
+var DOWNLOAD_PATH = UP_DOWN_PATH + "files/";
 
+$(document).ready(function () {
+		fileTable = $('#fileTable').DataTable( {
+              "processing": true,
+              "order": [[3, 'desc']],
+              ajax: {
+                  "dataSrc": "",// 返回数组对象
+                  "url" : GET_ALL_FILES_PATH,
+                  "data" : function(data) {
+                      // 添加其他参数
+                      planify(data)
+                  },
+                error : function(e) {
+                    $("#result").html(e.responseText);
+                }
+              },
+              columns: [
+                        { data: "fileId" },
+                        { data: "filename" },
+                        { data: "userId"},
+                        { data: "date" },
+                        { "data": "fileId",
+                         "render": function(data) {
+                            return '<a  href="' + DOWNLOAD_PATH + data + '"><button>download</button></a>'
+                         }
+                         },
+                        ]
+		} );
 });
 
 function progress(e) {
@@ -15,12 +46,15 @@ function upload(){
 		alert("choose file first!");
 		return;
 	}
+    $('#progress_percent').text(0);
+    $('progress').attr({value:0,max:100});
 	var formData = new FormData();
 	formData.append('file', file);
-	var fileInfo = {"userId": 9527};
-	formData.append('fileInfo', fileInfo);
+	var fileInfo = {};
+	fileInfo["userId"] = 9527;
+	formData.append('fileInfo', JSON.stringify(fileInfo));
 	$.ajax({
-        url: "/api/uploadfile",
+        url: UPLOAD_FILE_PATH,
 		type: 'POST',
 		enctype: 'multipart/form-data',
 		data: formData,
@@ -28,7 +62,7 @@ function upload(){
 		contentType: false,
 		processData: false,
 		success: function(response){
-			$("#result").text(data);
+			$("#result").text(response);
 			getAllFiles();
 		},
 		error: function(response){
@@ -54,45 +88,7 @@ function upload(){
 }
 
 function getAllFiles() {
-	if(fileTable != null){
-		fileTable.ajax.reload();
-	}
-	else{
-		fileTable = $('#fileTable').DataTable( {
-			//支持下载
-			dom: 'lBfrtip',
-			buttons: [
-			          {
-			        	  extend: 'excel',
-			        	  text: 'download file lists',
-			          }
-			          ],
-              "processing": true,
-              "order": [[2, 'desc']],
-              ajax: {
-                  "dataSrc": "",// 返回数组对象
-                  "url" : "/getallfiles",
-                  "data" : function(data) {
-                      // 添加其他参数
-                      planify(data)
-                  },
-                error : function(e) {
-                    $("#result").html(e.responseText);
-                }
-              },
-              columns: [
-                        { data: "fileId" },
-                        { data: "filename" },
-                        { data: "userId"},
-                        { data: "createdAt" },
-                        { "data": "fileId",
-                         "render": function(data) {
-                            return '<a  href="/files/' + data + '"><button>download</button></a>'
-                         }
-                         },
-                        ]
-		} );
-	}
+	fileTable.ajax.reload();
 }
 
 function planify(data){

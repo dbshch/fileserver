@@ -19,6 +19,11 @@ public class UploadFile {
     @Column(name = "created_at")
     private long createdAt;
 
+    // Need default constructor
+
+    public UploadFile() {
+    }
+
     public UploadFile(String originName, String filename, int userId, long createdAt) {
         this.originName = originName;
         this.filename = filename;

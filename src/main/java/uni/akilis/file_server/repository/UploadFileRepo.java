@@ -10,5 +10,5 @@ import uni.akilis.file_server.entity.UploadFile;
 
 @Repository
 public interface UploadFileRepo extends CrudRepository<UploadFile, Integer> {
-    String findFilenameById(Integer id);
+    UploadFile findFilenameById(Integer id);
 }
