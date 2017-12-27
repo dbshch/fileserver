@@ -1,5 +1,5 @@
 ### File Uploading Demo
-![File Server UI](fileserver.ong)
+![File Server UI](fileserver.png)
 
 ### Requirement Specifications
 - multiple 
