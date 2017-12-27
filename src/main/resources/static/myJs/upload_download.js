@@ -1,8 +1,12 @@
 var fileTable = null;
+var r = null;
 var UP_DOWN_PATH = "/updown/";
 var GET_ALL_FILES_PATH = UP_DOWN_PATH + "getallfiles";
 var UPLOAD_FILE_PATH  = UP_DOWN_PATH + "api/uploadfile";
 var DOWNLOAD_PATH = UP_DOWN_PATH + "files/";
+var RESUMABLE_UPLOAD_PATH = 'upload/resumable';
+var fileInfo = {};
+fileInfo["userId"] = 9527;
 
 $(document).ready(function () {
 		fileTable = $('#fileTable').DataTable( {
@@ -31,6 +35,68 @@ $(document).ready(function () {
                          },
                         ]
 		} );
+
+		r = new Resumable({
+            target:RESUMABLE_UPLOAD_PATH,
+            chunkSize:1*1024*1024,
+            simultaneousUploads:3,
+            testChunks: true,
+            throttleProgressCallbacks:1,
+            method: "octet",
+            query: {'fileInfo': JSON.stringify(fileInfo)}
+          });
+        // Resumable.js isn't supported, fall back on a different method
+        if(!r.support) {
+          $('.resumable-error').show();
+          $('#simple_updown').show();
+        } else {
+          // Show a place for dropping/selecting files
+          $('.resumable-drop').show();
+          r.assignDrop($('.resumable-drop')[0]);
+          r.assignBrowse($('.resumable-browse')[0]);
+
+          // Handle file add event
+          r.on('fileAdded', function(file){
+              // Show progress bar
+              $('.resumable-progress, .resumable-list').show();
+              // Show pause, hide resume
+              $('.resumable-progress .progress-resume-link').hide();
+              $('.resumable-progress .progress-pause-link').show();
+              // Add the file to the list
+              $('.resumable-list').append('<li class="resumable-file-'+file.uniqueIdentifier+'">Uploading <span class="resumable-file-name"></span> <span class="resumable-file-progress"></span>');
+              $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-name').html(file.fileName);
+              // Actually start the upload
+              r.upload();
+            });
+          r.on('pause', function(){
+              // Show resume, hide pause
+              $('.resumable-progress .progress-resume-link').show();
+              $('.resumable-progress .progress-pause-link').hide();
+            });
+          r.on('progress', function(){
+              // Show resume, hide pause
+              $('.resumable-progress .progress-resume-link').hide();
+              $('.resumable-progress .progress-pause-link').show();
+            });
+          r.on('complete', function(){
+              // Hide pause/resume when the upload has completed
+              $('.resumable-progress .progress-resume-link, .resumable-progress .progress-pause-link').hide();
+              getAllFiles();
+            });
+          r.on('fileSuccess', function(file,message){
+              // Reflect that the file upload has completed
+              $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-progress').html('(completed)');
+            });
+          r.on('fileError', function(file, message){
+              // Reflect that the file upload has resulted in error
+              $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-progress').html('(file could not be uploaded: '+message+')');
+            });
+          r.on('fileProgress', function(file){
+              // Handle progress for both the file and the overall upload
+              $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-progress').html(Math.floor(file.progress()*100) + '%');
+              $('.progress-bar').css({width:Math.floor(r.progress()*100) + '%'});
+            });
+        }
 });
 
 function progress(e) {
@@ -50,8 +116,6 @@ function upload(){
     $('progress').attr({value:0,max:100});
 	var formData = new FormData();
 	formData.append('file', file);
-	var fileInfo = {};
-	fileInfo["userId"] = 9527;
 	formData.append('fileInfo', JSON.stringify(fileInfo));
 	$.ajax({
         url: UPLOAD_FILE_PATH,
@@ -94,3 +158,4 @@ function getAllFiles() {
 function planify(data){
 
 }
+

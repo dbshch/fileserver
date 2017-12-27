@@ -22,13 +22,13 @@ import uni.akilis.file_server.util.Consts;
 
 @RestController
 @RequestMapping(Consts.UP_DOWN_PATH)
-public class RestUploadController {
+public class RestUpDownController {
 
     @Autowired
     StorageService storageService;
 
     @Autowired
-            private IDao iDao;
+    private IDao iDao;
 
 
     // Multiple file upload
@@ -38,11 +38,9 @@ public class RestUploadController {
             FileInfo fileInfo = new Gson().fromJson(fileInfoStr, FileInfo.class);
             String filename = storageService.store(file, fileInfo);
             return "You successfully uploaded - " + filename;
-        }
-        catch (JsonSyntaxException e) {
+        } catch (JsonSyntaxException e) {
             return e.toString();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return "FAIL! Maybe You had uploaded the file's size > 100MB";
         }
     }
