@@ -43,6 +43,8 @@ $(document).ready(function () {
             testChunks: true,
             throttleProgressCallbacks:1,
             method: "octet",
+            maxFiles: 10,
+            maxFileSize: 1 * 1024 * 1024 * 1024,
             query: {'fileInfo': JSON.stringify(fileInfo)}
           });
         // Resumable.js isn't supported, fall back on a different method
