@@ -1,10 +1,14 @@
-package uni.akilis.file_server.controller;
+package uni.akilis.file_server.pojo;
+
+import uni.akilis.file_server.util.HttpUtils;
 
 import java.io.File;
 import java.util.HashSet;
 
 /**
  * by fanxu
+ * <br/>
+ * Data structure of uploading file in server side.
  */
 public class ResumableInfo {
 

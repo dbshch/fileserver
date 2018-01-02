@@ -10,5 +10,7 @@
 ### Architecture
 ![Architecture](arch.png)
 
+### Managed and built by Maven
+
 ### Deployment
 ![Deployment](deploy.png)

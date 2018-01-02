@@ -10,6 +10,8 @@ import java.util.List;
 
 /**
  * Created by leo on 12/24/17.
+ * <br/>
+ * List of uploaded files which would be transferred to client side.
  */
 public class FileRecordDto implements Serializable {
     private int fileId;

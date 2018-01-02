@@ -1,9 +1,13 @@
-package uni.akilis.file_server.controller;
+package uni.akilis.file_server.service;
+
+import uni.akilis.file_server.pojo.ResumableInfo;
 
 import java.util.HashMap;
 
 /**
  * by fanxu
+ * <br/>
+ * Manage the uploading files in server side.
  */
 public class ResumableInfoStorage {
 

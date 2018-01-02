@@ -1,6 +1,6 @@
 var fileTable = null;
 var r = null;
-var UP_DOWN_PATH = "/updown/";
+var UP_DOWN_PATH = "updown/";
 var GET_ALL_FILES_PATH = UP_DOWN_PATH + "getallfiles";
 var UPLOAD_FILE_PATH  = UP_DOWN_PATH + "api/uploadfile";
 var DOWNLOAD_PATH = UP_DOWN_PATH + "files/";

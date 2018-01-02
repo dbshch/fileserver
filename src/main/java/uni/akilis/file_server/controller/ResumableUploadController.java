@@ -8,8 +8,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import uni.akilis.file_server.dao.IDao;
 import uni.akilis.file_server.dto.FileInfo;
-import uni.akilis.file_server.service.StorageService;
+import uni.akilis.file_server.pojo.ResumableInfo;
+import uni.akilis.file_server.service.ResumableInfoStorage;
 import uni.akilis.file_server.util.Consts;
+import uni.akilis.file_server.util.HttpUtils;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -18,15 +20,14 @@ import java.io.*;
 
 /**
  * Created by leo on 12/27/17.
+ * <br/>
+ * Support resumable file uploading.
  */
 @Controller
 @RequestMapping(Consts.RESUMABLE_UPLOAD_PATH)
 public class ResumableUploadController {
 
     public static final String UPLOAD_DIR = Consts.UPLOAD_DIR;
-
-    @Autowired
-    StorageService storageService;
 
     @Autowired
     private IDao iDao;

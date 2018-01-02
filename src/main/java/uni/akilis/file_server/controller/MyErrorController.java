@@ -11,6 +11,8 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Created by leo on 10/27/17.
+ * <br/>
+ * Handle kinds of exceptions.
  */
 @Controller
 public class MyErrorController implements ErrorController {

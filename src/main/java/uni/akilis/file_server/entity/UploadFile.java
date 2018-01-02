@@ -4,6 +4,8 @@ import javax.persistence.*;
 
 /**
  * Created by leo on 12/25/17.
+ * <br/>
+ * FIXME Add field "size" as file size.
  */
 @Entity
 @Table(name = "upload_file")

@@ -1,4 +1,4 @@
-package uni.akilis.file_server.controller;
+package uni.akilis.file_server.util;
 
 /**
  * by fanxu123
