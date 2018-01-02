@@ -12,7 +12,7 @@ import uni.akilis.file_server.util.Consts;
 @Controller
 public class IndexController {
 
-    @GetMapping(value = {"/", Consts.UP_DOWN_PATH})
+    @GetMapping(value = {"/"})
     public String index() {
         return "up_down";
     }
