@@ -7,7 +7,7 @@ import uni.akilis.file_server.util.Consts;
 /**
  * Created by leo on 12/24/17.
  * <br/>
- * Home page for this fiel server.
+ * Home page for accessing file server.
  */
 @Controller
 public class IndexController {

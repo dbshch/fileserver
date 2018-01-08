@@ -34,11 +34,11 @@ public class DaoTests {
     @Autowired
     private ApplicationContext appContxt;
 
-    int id = 1;
+    String token = "1";
     long time = System.currentTimeMillis();
     String originName = "file.pdf";
     String filename = time + "_" + originName;
-    FileInfo fileInfo = new FileInfo(id);
+    FileInfo fileInfo = new FileInfo(token);
 
     @Before
     public void before() {

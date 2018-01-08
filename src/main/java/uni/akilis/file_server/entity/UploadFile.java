@@ -5,7 +5,6 @@ import javax.persistence.*;
 /**
  * Created by leo on 12/25/17.
  * <br/>
- * FIXME Add field "size" as file size.
  */
 @Entity
 @Table(name = "upload_file")
@@ -13,23 +12,34 @@ public class UploadFile {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
+    /*
+    Origin name.
+     */
     @Column(name = "origin_name")
     private String originName;
+    /*
+    Unique filename.
+     */
     private String filename;
-    @Column(name = "user_id")
-    private int userId;
+    /*
+    Timestamp in milliseconds.
+     */
     @Column(name = "created_at")
     private long createdAt;
+    /*
+    File size in bytes.
+     */
+    private long size;
 
     // Need default constructor
 
     public UploadFile() {
     }
 
-    public UploadFile(String originName, String filename, int userId, long createdAt) {
+    // TODO save with size
+    public UploadFile(String originName, String filename, long createdAt) {
         this.originName = originName;
         this.filename = filename;
-        this.userId = userId;
         this.createdAt = createdAt;
     }
 
@@ -59,14 +69,6 @@ public class UploadFile {
         this.filename = filename;
     }
 
-    public int getUserId() {
-        return userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
-
     public long getCreatedAt() {
         return createdAt;
     }
@@ -75,14 +77,22 @@ public class UploadFile {
         this.createdAt = createdAt;
     }
 
+    public long getSize() {
+        return size;
+    }
+
+    public void setSize(long size) {
+        this.size = size;
+    }
+
     @Override
     public String toString() {
         return "UploadFile{" +
                 "id=" + id +
                 ", originName='" + originName + '\'' +
                 ", filename='" + filename + '\'' +
-                ", userId=" + userId +
                 ", createdAt=" + createdAt +
+                ", size=" + size +
                 '}';
     }
 }

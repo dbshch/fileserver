@@ -34,6 +34,7 @@ public class RestUpDownController {
 
 
     // Multiple file upload
+    @Deprecated
     @PostMapping("api/uploadfile")
     public String uploadFileMulti(@RequestParam("file") MultipartFile file, @RequestParam("fileInfo") String fileInfoStr) {
         try {

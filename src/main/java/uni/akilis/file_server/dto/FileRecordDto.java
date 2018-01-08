@@ -16,16 +16,16 @@ import java.util.List;
 public class FileRecordDto implements Serializable {
     private int fileId;
     private String filename;
-    private int userId;
     private String date;
+    private long bytes;
 
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public FileRecordDto(UploadFile uploadFile) {
         this.fileId = uploadFile.getId();
         this.filename = uploadFile.getOriginName();
-        this.userId = uploadFile.getUserId();
         this.date = dateFormat.format(new Date(uploadFile.getCreatedAt()));
+        this.bytes = uploadFile.getSize();
     }
 
     // getter and setter
@@ -46,20 +46,20 @@ public class FileRecordDto implements Serializable {
         this.filename = filename;
     }
 
-    public int getUserId() {
-        return userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
-
     public String getDate() {
         return date;
     }
 
     public void setDate(String date) {
         this.date = date;
+    }
+
+    public long getBytes() {
+        return bytes;
+    }
+
+    public void setBytes(long bytes) {
+        this.bytes = bytes;
     }
 
     public static List<FileRecordDto> transform(Iterable<UploadFile> files) {

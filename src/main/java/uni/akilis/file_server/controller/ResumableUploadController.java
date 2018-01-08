@@ -6,6 +6,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import uni.akilis.file_server.dao.IDao;
 import uni.akilis.file_server.dto.FileInfo;
 import uni.akilis.file_server.pojo.ResumableInfo;
@@ -23,7 +24,7 @@ import java.io.*;
  * <br/>
  * Support resumable file uploading.
  */
-@Controller
+@RestController
 @RequestMapping(Consts.RESUMABLE_UPLOAD_PATH)
 public class ResumableUploadController {
 
@@ -32,6 +33,13 @@ public class ResumableUploadController {
     @Autowired
     private IDao iDao;
 
+    /**
+     * Check whether this uploading chunk already exists in server side.
+     * @param request
+     * @param response
+     * @throws ServletException
+     * @throws IOException
+     */
     @RequestMapping(value = "", method = RequestMethod.GET)
     public void testChunk(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         int resumableChunkNumber = getResumableChunkNumber(request);
@@ -45,6 +53,14 @@ public class ResumableUploadController {
         }
     }
 
+    /**
+     * Store this uploading chunk into file.
+     * @param request
+     * @param response
+     * @param fileInfoStr
+     * @throws ServletException
+     * @throws IOException
+     */
     @RequestMapping(value = "", method = RequestMethod.POST)
     public void uploadChunk(HttpServletRequest request, HttpServletResponse response, @RequestParam("fileInfo") String fileInfoStr) throws ServletException, IOException {
         FileInfo fileInfo = new Gson().fromJson(fileInfoStr, FileInfo.class);
@@ -88,10 +104,21 @@ public class ResumableUploadController {
         }
     }
 
+    /**
+     * Get the uploading chunk number in file.
+     * @param request
+     * @return
+     */
     private int getResumableChunkNumber(HttpServletRequest request) {
         return HttpUtils.toInt(request.getParameter("resumableChunkNumber"), -1);
     }
 
+    /**
+     * Get or create a representation for this uploading file.
+     * @param request
+     * @return
+     * @throws ServletException
+     */
     private ResumableInfo getResumableInfo(HttpServletRequest request) throws ServletException {
         String base_dir = UPLOAD_DIR;
 

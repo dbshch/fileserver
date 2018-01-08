@@ -20,7 +20,7 @@ public class JpaDaoImpl implements IDao{
 
     @Override
     public UploadFile saveFile(long time, String originName, String filename, FileInfo fileInfo) {
-        UploadFile uploadFile = new UploadFile(originName, filename, fileInfo.getUserId(), time);
+        UploadFile uploadFile = new UploadFile(originName, filename, time);
         return this.uploadFileRepo.save(uploadFile);
     }
 
