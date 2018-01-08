@@ -8,7 +8,9 @@ var RESUMABLE_UPLOAD_PATH = 'upload/resumable';
 var fileInfo = {};
 fileInfo["userId"] = 9527;
 
+// bind event
 $(document).ready(function () {
+    // select by ID
 		fileTable = $('#fileTable').DataTable( {
               "processing": true,
               "order": [[3, 'desc']],
@@ -76,7 +78,7 @@ $(document).ready(function () {
               $('.resumable-progress .progress-pause-link').hide();
             });
           r.on('progress', function(){
-              // Show resume, hide pause
+              // Show hide, hide resume
               $('.resumable-progress .progress-resume-link').hide();
               $('.resumable-progress .progress-pause-link').show();
             });
