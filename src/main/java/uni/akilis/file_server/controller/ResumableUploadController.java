@@ -87,13 +87,11 @@ public class ResumableUploadController {
      * Store this uploading chunk into file.
      * @param request
      * @param response
-     * @param fileInfoStr
      * @throws ServletException
      * @throws IOException
      */
     @RequestMapping(value = "", method = RequestMethod.POST)
-    public void uploadChunk(HttpServletRequest request, HttpServletResponse response, @RequestParam("fileInfo") String fileInfoStr) throws ServletException, IOException {
-        FileInfo fileInfo = new Gson().fromJson(fileInfoStr, FileInfo.class);
+    public void uploadChunk(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
         int resumableChunkNumber = getResumableChunkNumber(request);
 

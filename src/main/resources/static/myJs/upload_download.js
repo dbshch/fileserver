@@ -1,12 +1,15 @@
 var fileTable = null;
+// resumable object for uploading files.
 var r = null;
-var UP_DOWN_PATH = "updown/";
-var GET_ALL_FILES_PATH = UP_DOWN_PATH + "getallfiles";
-var UPLOAD_FILE_PATH  = UP_DOWN_PATH + "api/uploadfile";
-var DOWNLOAD_PATH = UP_DOWN_PATH + "files/";
+
 var RESUMABLE_UPLOAD_PATH = 'upload/resumable';
+var UP_DOWN_PATH = RESUMABLE_UPLOAD_PATH;
+var GET_ALL_FILES_PATH = UP_DOWN_PATH + "getallfiles";
+var DOWNLOAD_PATH = UP_DOWN_PATH + "files/";
+
+// access service with token.
 var fileInfo = {};
-fileInfo["userId"] = 9527;
+fileInfo["token"] = "token";
 
 // bind event
 $(document).ready(function () {
@@ -28,7 +31,7 @@ $(document).ready(function () {
               columns: [
                         { data: "fileId" },
                         { data: "filename" },
-                        { data: "userId"},
+                        { data: "bytes"},
                         { data: "date" },
                         { "data": "fileId",
                          "render": function(data) {
@@ -38,6 +41,7 @@ $(document).ready(function () {
                         ]
 		} );
 
+		// Initialize a resumable object.
 		r = new Resumable({
             target:RESUMABLE_UPLOAD_PATH,
             chunkSize:1*1024*1024,
@@ -47,19 +51,19 @@ $(document).ready(function () {
             method: "octet",
             maxFiles: 10,
             maxFileSize: 1 * 1024 * 1024 * 1024,
+            // extra information such as token.
             query: {'fileInfo': JSON.stringify(fileInfo)}
           });
         // Resumable.js isn't supported, fall back on a different method
         if(!r.support) {
           $('.resumable-error').show();
-          $('#simple_updown').show();
         } else {
           // Show a place for dropping/selecting files
           $('.resumable-drop').show();
           r.assignDrop($('.resumable-drop')[0]);
           r.assignBrowse($('.resumable-browse')[0]);
 
-          // Handle file add event
+          // Handle file-add event
           r.on('fileAdded', function(file){
               // Show progress bar
               $('.resumable-progress, .resumable-list').show();
@@ -69,7 +73,7 @@ $(document).ready(function () {
               // Add the file to the list
               $('.resumable-list').append('<li class="resumable-file-'+file.uniqueIdentifier+'">Uploading <span class="resumable-file-name"></span> <span class="resumable-file-progress"></span>');
               $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-name').html(file.fileName);
-              // Actually start the upload
+              // Actually start the uploading
               r.upload();
             });
           r.on('pause', function(){
@@ -103,57 +107,6 @@ $(document).ready(function () {
         }
 });
 
-function progress(e) {
-	if (e.lengthComputable) {
-		$('#progress_percent').text(Math.floor((e.loaded * 100) / e.total));
-		$('progress').attr({value:e.loaded,max:e.total});
-	}
-}
-
-function upload(){
-	var file = $('input[name="upload_file"]').get(0).files[0];
-	if(file == null){
-		alert("choose file first!");
-		return;
-	}
-    $('#progress_percent').text(0);
-    $('progress').attr({value:0,max:100});
-	var formData = new FormData();
-	formData.append('file', file);
-	formData.append('fileInfo', JSON.stringify(fileInfo));
-	$.ajax({
-        url: UPLOAD_FILE_PATH,
-		type: 'POST',
-		enctype: 'multipart/form-data',
-		data: formData,
-		cache: false,
-		contentType: false,
-		processData: false,
-		success: function(response){
-			$("#result").text(response);
-			getAllFiles();
-		},
-		error: function(response){
-			console.log(response);
-			var error = "error";
-			console.log(response.status);
-			console.log(response.responseText);
-			if (response.status === 400 || response.status === 409 || response.status === 403 || response.status === 500){
-				error = response.status + " " + response.responseText;
-			}
-			alert(error);
-		},
-		xhr: function() {
-			var myXhr = $.ajaxSettings.xhr();
-			if (myXhr.upload) {
-				myXhr.upload.addEventListener('progress', progress, false);
-			} else {
-				console.log('Upload progress is not supported.');
-			}
-			return myXhr;
-		}
-	});
-}
 
 function getAllFiles() {
 	fileTable.ajax.reload();

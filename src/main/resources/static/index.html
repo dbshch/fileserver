@@ -8,15 +8,12 @@
 
     <link type="text/css" href="css/bootstrap.min.css" rel="stylesheet"/>
     <link type="text/css" href="css/dataTables.bootstrap.min.css" rel="stylesheet"/>
-
-    <link type="text/css" href="myCss/progressbar.css" rel="stylesheet"/>
-
-    <meta charset="utf-8" />
-    <link rel="stylesheet" type="text/css" href="css/style.css" />
+    <link rel="stylesheet" type="text/css" href="css/resumable.css" />
 
 </head>
 <body>
 <h1>File Server</h1>
+
 
 <div id="frame">
 
@@ -50,28 +47,6 @@
 
 </div>
 
-<div id="simple_updown" hidden>
-    <div style="margin:10px auto;width: 80%;border: 1px solid black;padding: 5px;">
-
-        <div>
-            <progress max=100></progress>&nbsp;&nbsp;
-            <span id="progress_percent">0</span>%
-            <br/><br/>
-
-            <input type="file" name="upload_file" />
-            <br/><br/>
-        </div>
-
-        <button id="upload_btn" class="btn btn-info btn-sm" onclick="upload()">upload</button>
-
-        <br/><br/>
-
-    </div>
-
-
-    <div class="col-sm-offset-2" id="result"></div>
-</div>
-
 <hr/>
 
 <div style="margin:10px auto;width: 80%;padding: 5px;">
@@ -81,7 +56,7 @@
         <tr>
             <th>file ID</th>
             <th>file name</th>
-            <th>user ID</th>
+            <th>file size (bytes)</th>
             <th>date</th>
             <th>operations</th>
         </tr>
@@ -94,9 +69,8 @@
 <script type="text/javascript" src="js/jquery.dataTables.min.js"></script>
 <script type="text/javascript" src="js/dataTables.bootstrap.min.js"></script>
 <script type="text/javascript" src="js/bootstrap.min.js"></script>
-
-<script src="js/resumable.js"></script>
-
+<script type="text/javascript" src="js/resumable.js"></script>
+<!--Example to use the file server-->
 <script type="text/javascript" src="myJs/upload_download.js"></script>
 
 </body>
