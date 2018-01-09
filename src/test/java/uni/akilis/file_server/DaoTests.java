@@ -34,11 +34,10 @@ public class DaoTests {
     @Autowired
     private ApplicationContext appContxt;
 
-    String token = "1";
     long time = System.currentTimeMillis();
     String originName = "file.pdf";
     String filename = time + "_" + originName;
-    FileInfo fileInfo = new FileInfo(token);
+    long size = 1;
 
     @Before
     public void before() {
@@ -47,24 +46,24 @@ public class DaoTests {
 
     @Test
     public void testSaveFile() {
-        UploadFile uploadFile = this.iDao.saveFile(time++, originName, filename, fileInfo);
+        UploadFile uploadFile = this.iDao.saveFile(time++, originName, filename, size);
         assertNotNull(uploadFile.getId());
-        this.iDao.saveFile(time++, originName, filename, fileInfo);
-        this.iDao.saveFile(time++, originName, filename, fileInfo);
+        this.iDao.saveFile(time++, originName, filename, size);
+        this.iDao.saveFile(time++, originName, filename, size);
         assertEquals(3, this.iDao.countFiles());
     }
 
     @Test
     public void testGetFilenameById() {
-        UploadFile uploadFile = this.iDao.saveFile(time++, originName, filename, fileInfo);
+        UploadFile uploadFile = this.iDao.saveFile(time++, originName, filename, size);
         assertEquals(filename, this.iDao.getFilenameById(uploadFile.getId()));
     }
 
     @Test
     public void testFindAllFiles(){
-        this.iDao.saveFile(time++, originName, filename, fileInfo);
-        this.iDao.saveFile(time++, originName, filename, fileInfo);
-        this.iDao.saveFile(time++, originName, filename, fileInfo);
+        this.iDao.saveFile(time++, originName, filename, size);
+        this.iDao.saveFile(time++, originName, filename, size);
+        this.iDao.saveFile(time++, originName, filename, size);
         assertEquals(3, this.iDao.findAllFiles().size());
     }
 }

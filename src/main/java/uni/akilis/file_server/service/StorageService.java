@@ -23,7 +23,6 @@ import uni.akilis.file_server.util.Consts;
  * Created by leo on 12/24/17.
  * <br/>
  * Filename here is unique with timestamp as the prefix.
- * TODO add a scheduler to refresh cache.
  */
 @Service
 public class StorageService {
@@ -31,29 +30,8 @@ public class StorageService {
     @Autowired
     private IDao iDao;
 
-    Logger log = LoggerFactory.getLogger(this.getClass().getName());
+    private static final Logger log = LoggerFactory.getLogger(StorageService.class);
     private final Path rootLocation = Paths.get(Consts.UPLOAD_DIR);
-
-    /**
-     * Store the uploaded file.
-     *
-     * @param file
-     * @param fileInfo
-     * @return Stored file name
-     */
-    public String store(MultipartFile file, FileInfo fileInfo) {
-        try {
-            long time = System.currentTimeMillis();
-            String originName = file.getOriginalFilename();
-            String filename = time + "_" + originName;
-            log.debug("File abs path: {}", this.rootLocation.resolve(filename).toAbsolutePath().toString());
-            Files.copy(file.getInputStream(), this.rootLocation.resolve(filename));
-            this.iDao.saveFile(time, originName, filename, fileInfo);
-            return filename;
-        } catch (Exception e) {
-            throw new RuntimeException("FAIL!");
-        }
-    }
 
     /**
      * Load a file by its id.

@@ -19,8 +19,8 @@ public class JpaDaoImpl implements IDao{
     private UploadFileRepo uploadFileRepo;
 
     @Override
-    public UploadFile saveFile(long time, String originName, String filename, FileInfo fileInfo) {
-        UploadFile uploadFile = new UploadFile(originName, filename, time);
+    public UploadFile saveFile(long time, String originName, String filename, long size) {
+        UploadFile uploadFile = new UploadFile(originName, filename, time, size);
         return this.uploadFileRepo.save(uploadFile);
     }
 

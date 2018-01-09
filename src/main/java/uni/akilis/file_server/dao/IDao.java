@@ -10,14 +10,16 @@ import java.util.List;
  * Created by leo on 12/24/17.
  */
 public interface IDao {
+
     /**
-     * Archive the uploaded file with the detailed information.
+     * Archive the uploaded file.
      * @param time
      * @param originName
      * @param filename
-     * @param fileInfo
+     * @param size
+     * @return
      */
-    UploadFile saveFile(long time, String originName, String filename, FileInfo fileInfo);
+    UploadFile saveFile(long time, String originName, String filename, long size);
 
     /**
      * Get the archived file name by its id.

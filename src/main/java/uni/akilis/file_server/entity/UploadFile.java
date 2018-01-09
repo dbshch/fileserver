@@ -36,11 +36,11 @@ public class UploadFile {
     public UploadFile() {
     }
 
-    // TODO save with size
-    public UploadFile(String originName, String filename, long createdAt) {
+    public UploadFile(String originName, String filename, long createdAt, long size) {
         this.originName = originName;
         this.filename = filename;
         this.createdAt = createdAt;
+        this.size = size;
     }
 
     //getter and setter

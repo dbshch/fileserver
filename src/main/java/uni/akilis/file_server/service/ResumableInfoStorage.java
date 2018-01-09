@@ -1,8 +1,12 @@
 package uni.akilis.file_server.service;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import uni.akilis.file_server.pojo.ResumableInfo;
+import uni.akilis.file_server.util.Consts;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * by fanxu
@@ -51,6 +55,7 @@ public class ResumableInfoStorage {
             info.resumableFilename      = resumableFilename;
             info.resumableRelativePath  = resumableRelativePath;
             info.resumableFilePath      = resumableFilePath;
+            info.createdAt = System.currentTimeMillis();
 
             mMap.put(resumableIdentifier, info);
         }
@@ -58,10 +63,35 @@ public class ResumableInfoStorage {
     }
 
     /**
-     * ɾ��ResumableInfo
+     * ResumableInfo
      * @param info
      */
     public void remove(ResumableInfo info) {
        mMap.remove(info.resumableIdentifier);
+    }
+
+    /**
+     * Clean the outdated files in the memory.
+     * @return Cleaned number.
+     */
+    int refresh() {
+        int cnt = 0;
+        long now = System.currentTimeMillis();
+        Iterator<Map.Entry<String, ResumableInfo>> it = mMap.entrySet().iterator();
+        while (it.hasNext()) {
+            if (now - it.next().getValue().createdAt > Consts.RESUMABLE_REFRESH_PERIOD) {
+                it.remove();
+                cnt++;
+            }
+        }
+        return cnt;
+    }
+
+    /**
+     * Files number in memory.
+     * @return
+     */
+    public int filesNumber() {
+        return mMap.size();
     }
 }

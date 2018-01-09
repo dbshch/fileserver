@@ -6,6 +6,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import uni.akilis.file_server.service.StorageService;
 
 import javax.annotation.Resource;
@@ -14,6 +15,7 @@ import javax.annotation.Resource;
  * Created by leo on 11/19/17.
  */
 @SpringBootApplication
+@EnableScheduling
 public class Application implements CommandLineRunner{
 
     @Resource

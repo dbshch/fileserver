@@ -12,11 +12,15 @@ import java.util.HashSet;
  */
 public class ResumableInfo {
 
-    public int      resumableChunkSize;
-    public long     resumableTotalSize;
-    public String   resumableIdentifier;
-    public String   resumableFilename;
-    public String   resumableRelativePath;
+    public int resumableChunkSize;
+    public long resumableTotalSize;
+    public String resumableIdentifier;
+    public String resumableFilename;
+    public String resumableRelativePath;
+    /*
+    In millis.
+     */
+    public long createdAt;
 
     public static class ResumableChunkNumber {
         public ResumableChunkNumber(int number) {
@@ -28,7 +32,7 @@ public class ResumableInfo {
         @Override
         public boolean equals(Object obj) {
             return obj instanceof ResumableChunkNumber
-                    ? ((ResumableChunkNumber)obj).number == this.number : false;
+                    ? ((ResumableChunkNumber) obj).number == this.number : false;
         }
 
         @Override
@@ -42,7 +46,7 @@ public class ResumableInfo {
 
     public String resumableFilePath;
 
-    public boolean vaild(){
+    public boolean vaild() {
         if (resumableChunkSize < 0 || resumableTotalSize < 0
                 || HttpUtils.isEmpty(resumableIdentifier)
                 || HttpUtils.isEmpty(resumableFilename)
@@ -52,10 +56,11 @@ public class ResumableInfo {
             return true;
         }
     }
+
     public boolean checkIfUploadFinished() {
         //check if upload finished
         int count = (int) Math.ceil(((double) resumableTotalSize) / ((double) resumableChunkSize));
-        for(int i = 1; i < count; i ++) {
+        for (int i = 1; i < count; i++) {
             if (!uploadedChunks.contains(new ResumableChunkNumber(i))) {
                 return false;
             }
@@ -65,6 +70,7 @@ public class ResumableInfo {
 
     /**
      * rename filename with timestamp as prefix.
+     *
      * @return final file.
      */
     public File renameFile(long timestamp) {
@@ -72,10 +78,9 @@ public class ResumableInfo {
         File file = new File(resumableFilePath);
         String parentPath = file.getAbsoluteFile().getParent();
         File newFile = new File(parentPath, timestamp + "_" + resumableFilename);
-        if(file.renameTo(newFile)) {
+        if (file.renameTo(newFile)) {
             return newFile;
-        }
-        else
+        } else
             return null;
     }
 }

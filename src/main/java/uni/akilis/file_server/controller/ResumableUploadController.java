@@ -2,15 +2,17 @@ package uni.akilis.file_server.controller;
 
 import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import uni.akilis.file_server.dao.IDao;
 import uni.akilis.file_server.dto.FileInfo;
+import uni.akilis.file_server.dto.FileRecordDto;
 import uni.akilis.file_server.pojo.ResumableInfo;
 import uni.akilis.file_server.service.ResumableInfoStorage;
+import uni.akilis.file_server.service.StorageService;
 import uni.akilis.file_server.util.Consts;
 import uni.akilis.file_server.util.HttpUtils;
 
@@ -18,11 +20,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.util.List;
 
 /**
  * Created by leo on 12/27/17.
  * <br/>
- * Support resumable file uploading.
+ * Support resumable file uploading. Show uploaded file list and provide downloading.
  */
 @RestController
 @RequestMapping(Consts.RESUMABLE_UPLOAD_PATH)
@@ -32,6 +35,33 @@ public class ResumableUploadController {
 
     @Autowired
     private IDao iDao;
+
+    @Autowired
+    StorageService storageService;
+
+
+    /**
+     * List all files.
+     * @return
+     */
+    @GetMapping("getallfiles")
+    public List<FileRecordDto> getListFiles() {
+        List<FileRecordDto> lstFiles = this.iDao.findAllFiles();
+        return lstFiles;
+    }
+
+    /**
+     * Download a file with resource locator.
+     * @param fileId
+     * @return
+     */
+    @GetMapping("files/{fileId:.+}")
+    public ResponseEntity<Resource> getFile(@PathVariable int fileId) {
+        Resource file = storageService.loadFile(fileId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
+                .body(file);
+    }
 
     /**
      * Check whether this uploading chunk already exists in server side.
@@ -97,7 +127,7 @@ public class ResumableUploadController {
             File newFile = info.renameFile(timestamp);
             ResumableInfoStorage.getInstance().remove(info);
             System.out.println("File stored as " + newFile.getAbsolutePath());
-            this.iDao.saveFile(timestamp, info.resumableFilename, newFile.getName(), fileInfo);
+            this.iDao.saveFile(timestamp, info.resumableFilename, newFile.getName(), newFile.length());
             response.getWriter().print("All finished.");
         } else {
             response.getWriter().print("Upload");
