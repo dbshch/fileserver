@@ -28,7 +28,7 @@ import java.util.List;
  * Support resumable file uploading. Show uploaded file list and provide downloading.
  */
 @RestController
-@RequestMapping(Consts.RESUMABLE_UPLOAD_PATH)
+@RequestMapping(Consts.UP_DOWN_PATH)
 public class ResumableUploadController {
 
     public static final String UPLOAD_DIR = Consts.UPLOAD_DIR;
@@ -44,7 +44,7 @@ public class ResumableUploadController {
      * List all files.
      * @return
      */
-    @GetMapping("getallfiles")
+    @PostMapping("getallfiles")
     public List<FileRecordDto> getListFiles() {
         List<FileRecordDto> lstFiles = this.iDao.findAllFiles();
         return lstFiles;
@@ -55,7 +55,7 @@ public class ResumableUploadController {
      * @param fileId
      * @return
      */
-    @GetMapping("files/{fileId:.+}")
+    @PostMapping("files/{fileId:.+}")
     public ResponseEntity<Resource> getFile(@PathVariable int fileId) {
         Resource file = storageService.loadFile(fileId);
         return ResponseEntity.ok()
@@ -70,7 +70,7 @@ public class ResumableUploadController {
      * @throws ServletException
      * @throws IOException
      */
-    @RequestMapping(value = "", method = RequestMethod.GET)
+    @RequestMapping(value = "resumable", method = RequestMethod.GET)
     public void testChunk(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         int resumableChunkNumber = getResumableChunkNumber(request);
 
@@ -90,7 +90,7 @@ public class ResumableUploadController {
      * @throws ServletException
      * @throws IOException
      */
-    @RequestMapping(value = "", method = RequestMethod.POST)
+    @RequestMapping(value = "resumable", method = RequestMethod.POST)
     public void uploadChunk(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
         int resumableChunkNumber = getResumableChunkNumber(request);

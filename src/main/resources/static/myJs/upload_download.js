@@ -2,14 +2,15 @@ var fileTable = null;
 // resumable object for uploading files.
 var r = null;
 
-var RESUMABLE_UPLOAD_PATH = 'upload/resumable';
-var UP_DOWN_PATH = RESUMABLE_UPLOAD_PATH;
+var UP_DOWN_PATH = "updown/";
 var GET_ALL_FILES_PATH = UP_DOWN_PATH + "getallfiles";
 var DOWNLOAD_PATH = UP_DOWN_PATH + "files/";
+var RESUMABLE_UPLOAD_PATH = UP_DOWN_PATH + "resumable";
 
 // access service with token.
 var fileInfo = {};
 fileInfo["token"] = "token";
+var fileInfoStr = JSON.stringify(fileInfo);
 
 // bind event
 $(document).ready(function () {
@@ -20,6 +21,7 @@ $(document).ready(function () {
               ajax: {
                   "dataSrc": "",// 返回数组对象
                   "url" : GET_ALL_FILES_PATH,
+                  "method": "POST",
                   "data" : function(data) {
                       // 添加其他参数
                       planify(data)
@@ -35,7 +37,11 @@ $(document).ready(function () {
                         { data: "date" },
                         { "data": "fileId",
                          "render": function(data) {
-                            return '<a  href="' + DOWNLOAD_PATH + data + '"><button>download</button></a>'
+                            return '<form method="POST" action="' + UP_DOWN_PATH + "files/" + data +  '">'
+                                // Be careful of double quotes in fileInfoStr!
+                                + "<input hidden type='text' name='fileInfo' value='" + fileInfoStr + "'/>"
+                                + '<button type="submit">download</button>'
+                                + '</form>';
                          }
                          },
                         ]
@@ -52,7 +58,7 @@ $(document).ready(function () {
             maxFiles: 10,
             maxFileSize: 1 * 1024 * 1024 * 1024,
             // extra information such as token.
-            query: {'fileInfo': JSON.stringify(fileInfo)}
+            query: {'fileInfo': fileInfoStr}
           });
         // Resumable.js isn't supported, fall back on a different method
         if(!r.support) {
@@ -113,6 +119,5 @@ function getAllFiles() {
 }
 
 function planify(data){
-
+    data.fileInfo = fileInfoStr;
 }
-

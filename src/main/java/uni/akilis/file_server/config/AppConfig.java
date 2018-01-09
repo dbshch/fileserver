@@ -15,6 +15,6 @@ public class AppConfig extends WebMvcConfigurerAdapter{
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(tokenInterceptor)
-                .addPathPatterns(Consts.RESUMABLE_UPLOAD_PATH);
+                .addPathPatterns(Consts.UP_DOWN_PATH + "**");
     }
 }

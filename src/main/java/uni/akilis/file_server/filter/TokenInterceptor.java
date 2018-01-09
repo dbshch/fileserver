@@ -8,10 +8,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 import uni.akilis.file_server.dto.FileInfo;
+import uni.akilis.file_server.util.Utils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * Validate the access with token.
+ */
 @Component
 public class TokenInterceptor implements HandlerInterceptor {
 
@@ -34,7 +38,7 @@ public class TokenInterceptor implements HandlerInterceptor {
                 httpServletRequest.getRemoteAddr(),
                 httpServletRequest.getMethod(),
                 httpServletRequest.getRequestURI(),
-                httpServletRequest.getParameterMap().toString());
+                Utils.mapToString(httpServletRequest.getParameterMap()));
         return false;
     }
 

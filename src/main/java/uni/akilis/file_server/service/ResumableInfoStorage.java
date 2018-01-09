@@ -4,6 +4,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import uni.akilis.file_server.pojo.ResumableInfo;
 import uni.akilis.file_server.util.Consts;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -71,16 +72,19 @@ public class ResumableInfoStorage {
     }
 
     /**
-     * Clean the outdated files in the memory.
+     * Clean the outdated files in the memory and disk.
      * @return Cleaned number.
      */
-    int refresh() {
+    public synchronized int refresh() {
         int cnt = 0;
         long now = System.currentTimeMillis();
         Iterator<Map.Entry<String, ResumableInfo>> it = mMap.entrySet().iterator();
         while (it.hasNext()) {
-            if (now - it.next().getValue().createdAt > Consts.RESUMABLE_REFRESH_PERIOD) {
+            Map.Entry<String, ResumableInfo> ent = it.next();
+            if (now - ent.getValue().createdAt > Consts.RESUMABLE_REFRESH_PERIOD) {
                 it.remove();
+                File file = new File(ent.getValue().resumableFilePath);
+                file.delete();
                 cnt++;
             }
         }
