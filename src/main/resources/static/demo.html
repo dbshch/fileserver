@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link type="text/css" href="css/bootstrap.min.css" rel="stylesheet"/>
+    <link type="text/css" href="css/dataTables.bootstrap.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="css/resumable.css" />
+
+</head>
+<body>
+
+<!--Uploading components-->
+<!--***-->
+<button id="subButton" class="btn btn-info btn-sm" data-toggle="modal" data-target="#uploadModal" onclick="upload()">upload</button>
+
+<!-- Upload Modal -->
+<div id="uploadModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" onclick="cancelUploading()">&times;</button>
+                <h4 class="modal-title">File Server</h4>
+            </div>
+            <div class="modal-body">
+                <div class="resumable-error">
+                    Your browser, unfortunately, is not supported by Resumable.js. The library requires support for <a href="http://www.w3.org/TR/FileAPI/">the HTML5 File API</a> along with <a href="http://www.w3.org/TR/FileAPI/#normalization-of-params">file slicing</a>.
+                </div>
+
+                <div class="resumable-drop" ondragenter="jQuery(this).addClass('resumable-dragover');" ondragend="jQuery(this).removeClass('resumable-dragover');" ondrop="jQuery(this).removeClass('resumable-dragover');">
+                    Drop video files here to upload or <a class="resumable-browse"><u>select from your computer</u></a>
+                </div>
+
+                <div class="resumable-progress">
+                    <table>
+                        <tr>
+                            <td width="100%"><div class="progress-container"><div class="progress-bar"></div></div></td>
+                            <td class="progress-text" nowrap="nowrap"></td>
+                            <td class="progress-pause" nowrap="nowrap">
+                                <a href="#" onclick="uploadAction(); return(false);" class="progress-resume-link"><img src="img/resume.png" title="Resume upload" /></a>
+                                <a href="#" onclick="pauseAction(); return(false);" class="progress-pause-link"><img src="img/pause.png" title="Pause upload" /></a>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <ul class="resumable-list"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--***-->
+
+<hr/>
+
+<div style="margin:10px auto;width: 80%;padding: 5px;">
+    <table id="fileTable"
+           class="table table-striped">
+        <thead>
+        <tr>
+            <th>file ID</th>
+            <th>file name</th>
+            <th>file size (bytes)</th>
+            <th>date</th>
+            <th>operations</th>
+        </tr>
+        </thead>
+    </table>
+</div>
+
+
+<script type="text/javascript" src="js/jquery-1.12.0.min.js"></script>
+<script type="text/javascript" src="js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="js/dataTables.bootstrap.min.js"></script>
+<script type="text/javascript" src="js/bootstrap.min.js"></script>
+<script type="text/javascript" src="js/resumable.js"></script>
+<script type="text/javascript" src="js/bim_uploader.js"></script>
+<!--Example to use the file server-->
+<script type="text/javascript" src="myJs/demo.js"></script>
+
+</body>
+</html>

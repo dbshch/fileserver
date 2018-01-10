@@ -2,7 +2,6 @@ package uni.akilis.file_server.dao;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import uni.akilis.file_server.dto.FileInfo;
 import uni.akilis.file_server.dto.FileRecordDto;
 import uni.akilis.file_server.entity.UploadFile;
 import uni.akilis.file_server.repository.UploadFileRepo;
@@ -42,5 +41,10 @@ public class JpaDaoImpl implements IDao{
     @Override
     public int countFiles() {
         return (int) this.uploadFileRepo.count();
+    }
+
+    @Override
+    public void removeUploadRecord(Integer id) {
+        this.uploadFileRepo.delete(id);
     }
 }

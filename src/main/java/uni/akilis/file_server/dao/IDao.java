@@ -44,4 +44,10 @@ public interface IDao {
      * @return
      */
     int countFiles();
+
+    /**
+     * Remove a record from uploading.
+     * @param id
+     */
+    void removeUploadRecord(Integer id);
 }

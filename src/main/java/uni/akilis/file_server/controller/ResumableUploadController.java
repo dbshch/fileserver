@@ -1,15 +1,26 @@
 package uni.akilis.file_server.controller;
 
 import com.google.gson.Gson;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import uni.akilis.file_server.config.UploadWatcher;
 import uni.akilis.file_server.dao.IDao;
 import uni.akilis.file_server.dto.FileInfo;
 import uni.akilis.file_server.dto.FileRecordDto;
+import uni.akilis.file_server.entity.UploadFile;
 import uni.akilis.file_server.pojo.ResumableInfo;
 import uni.akilis.file_server.service.ResumableInfoStorage;
 import uni.akilis.file_server.service.StorageService;
@@ -20,6 +31,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 /**
@@ -33,15 +46,22 @@ public class ResumableUploadController {
 
     public static final String UPLOAD_DIR = Consts.UPLOAD_DIR;
 
+    private static final Logger logger = LoggerFactory.getLogger(ResumableUploadController.class);
+
+    private CloseableHttpClient httpclient = HttpClients.createDefault();
+
     @Autowired
     private IDao iDao;
 
     @Autowired
     StorageService storageService;
 
+    @Autowired
+    private UploadWatcher uploadWatcher;
 
     /**
      * List all files.
+     *
      * @return
      */
     @PostMapping("getallfiles")
@@ -52,6 +72,7 @@ public class ResumableUploadController {
 
     /**
      * Download a file with resource locator.
+     *
      * @param fileId
      * @return
      */
@@ -65,6 +86,7 @@ public class ResumableUploadController {
 
     /**
      * Check whether this uploading chunk already exists in server side.
+     *
      * @param request
      * @param response
      * @throws ServletException
@@ -85,13 +107,14 @@ public class ResumableUploadController {
 
     /**
      * Store this uploading chunk into file.
+     *
      * @param request
      * @param response
      * @throws ServletException
      * @throws IOException
      */
     @RequestMapping(value = "resumable", method = RequestMethod.POST)
-    public void uploadChunk(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    public void uploadChunk(HttpServletRequest request, HttpServletResponse response, @RequestParam("fileInfo") String fileInfoStr) throws ServletException, IOException, InterruptedException {
 
         int resumableChunkNumber = getResumableChunkNumber(request);
 
@@ -125,15 +148,85 @@ public class ResumableUploadController {
             File newFile = info.renameFile(timestamp);
             ResumableInfoStorage.getInstance().remove(info);
             System.out.println("File stored as " + newFile.getAbsolutePath());
-            this.iDao.saveFile(timestamp, info.resumableFilename, newFile.getName(), newFile.length());
-            response.getWriter().print("All finished.");
+            UploadFile uploadFile = this.iDao.saveFile(timestamp, info.resumableFilename, newFile.getName(), newFile.length());
+            // notify the web server which user has uploaded which file.
+            FileInfo fileInfo = new Gson().fromJson(fileInfoStr, FileInfo.class);
+            if (!feedWatcher(fileInfo.getUserId(), uploadFile.getId(), fileInfo.getToken())) {
+                Thread.sleep(1000);
+                if (!feedWatcher(fileInfo.getUserId(), uploadFile.getId(), fileInfo.getToken())) {
+                    logger.warn("Upload notification failed!\nuser id = {}, file id = {}", fileInfo.getUserId(), uploadFile.getId());
+                    // delete inconsistency upload record.
+                    newFile.delete();
+                    this.iDao.removeUploadRecord(uploadFile.getId());
+                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    return;
+                }
+            }
+            response.getWriter().print("One File uploaded.");
         } else {
             response.getWriter().print("Upload");
         }
     }
 
     /**
+     * Notify the watcher there is a file uploaded just now.
+     *
+     * @param userId
+     * @param fileId
+     * @param token
+     * @return
+     */
+    private boolean feedWatcher(int userId, int fileId, String token) {
+        /*
+        Build the json parameter to transfer
+         */
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        sb.append("\"")
+                .append("userId")
+                .append("\":")
+                .append(userId)
+                .append(",")
+                .append("\"")
+                .append("fileId")
+                .append("\":")
+                .append(fileId)
+                .append(",")
+                .append("\"")
+                .append("token")
+                .append("\":")
+                .append("\"").append(token).append("\"");
+        sb.append("}");
+        logger.debug("File confirming json string: " + sb.toString());
+        try {
+            URI uri = new URIBuilder()
+                    .setScheme(uploadWatcher.getScheme())
+                    .setHost(uploadWatcher.getHost())
+                    .setPort(uploadWatcher.getPort())
+                    .setPath(uploadWatcher.getPath())
+                    .build();
+            logger.debug("File confirming request URI: " + uri.toASCIIString());
+            StringEntity requestEntity = new StringEntity(
+                    sb.toString(),
+                    ContentType.APPLICATION_JSON);
+            HttpPost httppost = new HttpPost(uri);
+            httppost.setEntity(requestEntity);
+            CloseableHttpResponse httpresponse = this.httpclient.execute(httppost);
+            if (HttpServletResponse.SC_OK == httpresponse.getStatusLine().getStatusCode())
+                return true;
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
      * Get the uploading chunk number in file.
+     *
      * @param request
      * @return
      */
@@ -143,6 +236,7 @@ public class ResumableUploadController {
 
     /**
      * Get or create a representation for this uploading file.
+     *
      * @param request
      * @return
      * @throws ServletException

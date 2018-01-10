@@ -1,0 +1,6 @@
+#UploadWatcher parameters
+watcher:
+  scheme: http
+  host: localhost
+  port: 8083
+  path: "/mock/watcher"
