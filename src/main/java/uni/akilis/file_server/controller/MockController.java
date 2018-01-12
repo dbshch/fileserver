@@ -21,7 +21,7 @@ import java.io.IOException;
 public class MockController {
 
 private static final Logger logger = LoggerFactory.getLogger(MockController.class);
-    @Value("mock-watcher")
+    @Value("${mock-watcher}")
     private int mockWatcher = 0;
 
     @PostMapping("watcher")
@@ -42,6 +42,7 @@ private static final Logger logger = LoggerFactory.getLogger(MockController.clas
             case 3:
                 code = code = HttpServletResponse.SC_OK;
                 jsonContent = gson.toJson(new UploadConfirmSuccess("fake" + uploadConfirmDto.getToken()));
+                break;
             default:
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
