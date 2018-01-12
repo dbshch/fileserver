@@ -19,4 +19,5 @@
 ### Example of coordination with another web server.
 ![Coordination](coordinate.png)
 
-
+### ER diagram
+![ER diagram](tables.png)
