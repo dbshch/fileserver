@@ -12,20 +12,30 @@ import java.io.Serializable;
 public class FileInfo implements Serializable{
 
     /*
-    Access token and user id for REST API
+    Access token, user id, project id for REST API
      */
     private String token;
     private int userId;
+    private int projectId;
 
     public FileInfo(){}
 
-    public FileInfo(String token, int userId) {
+    public FileInfo(String token, int userId, int projectId) {
         this.token = token;
         this.userId = userId;
+        this.projectId = projectId;
     }
 
     // getter and setter
 
+
+    public int getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(int projectId) {
+        this.projectId = projectId;
+    }
 
     public int getUserId() {
         return userId;

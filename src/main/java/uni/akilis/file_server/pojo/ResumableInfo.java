@@ -1,5 +1,8 @@
 package uni.akilis.file_server.pojo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import uni.akilis.file_server.util.Consts;
 import uni.akilis.file_server.util.HttpUtils;
 
 import java.io.File;
@@ -11,6 +14,8 @@ import java.util.HashSet;
  * Data structure of uploading file in server side.
  */
 public class ResumableInfo {
+
+    private static final Logger logger = LoggerFactory.getLogger(ResumableInfo.class);
 
     public int resumableChunkSize;
     public long resumableTotalSize;
@@ -47,6 +52,16 @@ public class ResumableInfo {
     public String resumableFilePath;
 
     public boolean vaild() {
+        // check free space
+        if (uploadedChunks.size() == 0) {
+            File file = new File("./");
+            if (1.0 * file.getFreeSpace() / file.getTotalSpace() < Consts.FISK_SPACE_THRESHOLD) {
+                logger.error("Free space is not enough!");
+                // XXX email to the admin.
+                return false;
+            }
+        }
+
         if (resumableChunkSize < 0 || resumableTotalSize < 0
                 || HttpUtils.isEmpty(resumableIdentifier)
                 || HttpUtils.isEmpty(resumableFilename)

@@ -11,5 +11,10 @@ public class Consts {
      * Refresh period for memory cleaning in millis.
      */
     public static final long RESUMABLE_REFRESH_PERIOD = 1 * 24 * 3600 * 1000;
+
+    /**
+     * Threshold for throttling the uploading when disk is almost full.
+     */
+    public static final double FISK_SPACE_THRESHOLD = 0.2;
 //    public static final long RESUMABLE_REFRESH_PERIOD = 2 * 60 * 1000;  // For testing
 }

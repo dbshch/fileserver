@@ -10,6 +10,7 @@ var RESUMABLE_UPLOAD_PATH = UP_DOWN_PATH + "resumable";
 var fileInfo = {};
 fileInfo["token"] = "token";
 fileInfo["userId"] = 9527;
+fileInfo["projectId"] = 1;
 var fileInfoStr = JSON.stringify(fileInfo);
 
 // initial DataTable
@@ -66,8 +67,8 @@ function uploadCompleteHandler() {
     console.log("Upload finished.");
     getAllFiles();
     /*
-You can send "A file was stored in file server" message to web server here.
- */
+    Do what you like here.
+     */
 }
 
 

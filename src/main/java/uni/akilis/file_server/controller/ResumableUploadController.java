@@ -1,6 +1,7 @@
 package uni.akilis.file_server.controller;
 
 import com.google.gson.Gson;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -9,6 +10,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uni.akilis.file_server.config.UploadWatcher;
 import uni.akilis.file_server.dao.IDao;
-import uni.akilis.file_server.dto.FileInfo;
-import uni.akilis.file_server.dto.FileRecordDto;
+import uni.akilis.file_server.dto.*;
 import uni.akilis.file_server.entity.UploadFile;
 import uni.akilis.file_server.pojo.ResumableInfo;
 import uni.akilis.file_server.service.ResumableInfoStorage;
@@ -115,7 +116,6 @@ public class ResumableUploadController {
      */
     @RequestMapping(value = "resumable", method = RequestMethod.POST)
     public void uploadChunk(HttpServletRequest request, HttpServletResponse response, @RequestParam("fileInfo") String fileInfoStr) throws ServletException, IOException, InterruptedException {
-
         int resumableChunkNumber = getResumableChunkNumber(request);
 
         ResumableInfo info = getResumableInfo(request);
@@ -151,9 +151,10 @@ public class ResumableUploadController {
             UploadFile uploadFile = this.iDao.saveFile(timestamp, info.resumableFilename, newFile.getName(), newFile.length());
             // notify the web server which user has uploaded which file.
             FileInfo fileInfo = new Gson().fromJson(fileInfoStr, FileInfo.class);
-            if (!feedWatcher(fileInfo.getUserId(), uploadFile.getId(), fileInfo.getToken())) {
+            UploadConfirmDto uploadConfirmDto = new UploadConfirmDto(fileInfo.getToken(), fileInfo.getUserId(), fileInfo.getProjectId(), uploadFile.getId());
+            if (!feedWatcher(uploadConfirmDto)) {
                 Thread.sleep(1000);
-                if (!feedWatcher(fileInfo.getUserId(), uploadFile.getId(), fileInfo.getToken())) {
+                if (!feedWatcher(uploadConfirmDto)) {
                     logger.warn("Upload notification failed!\nuser id = {}, file id = {}", fileInfo.getUserId(), uploadFile.getId());
                     // delete inconsistency upload record.
                     newFile.delete();
@@ -169,35 +170,16 @@ public class ResumableUploadController {
     }
 
     /**
-     * Notify the watcher there is a file uploaded just now.
-     *
-     * @param userId
-     * @param fileId
-     * @param token
+     * Notify the watcher that a file was uploaded just now.
+     * @param uploadConfirmDto
      * @return
      */
-    private boolean feedWatcher(int userId, int fileId, String token) {
+    private boolean feedWatcher(UploadConfirmDto uploadConfirmDto) {
         /*
         Build the json parameter to transfer
          */
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        sb.append("\"")
-                .append("userId")
-                .append("\":")
-                .append(userId)
-                .append(",")
-                .append("\"")
-                .append("fileId")
-                .append("\":")
-                .append(fileId)
-                .append(",")
-                .append("\"")
-                .append("token")
-                .append("\":")
-                .append("\"").append(token).append("\"");
-        sb.append("}");
-        logger.debug("File confirming json string: " + sb.toString());
+        String jsonContent = new Gson().toJson(uploadConfirmDto);
+        logger.debug("File confirming json string: " + jsonContent);
         try {
             URI uri = new URIBuilder()
                     .setScheme(uploadWatcher.getScheme())
@@ -207,13 +189,34 @@ public class ResumableUploadController {
                     .build();
             logger.debug("File confirming request URI: " + uri.toASCIIString());
             StringEntity requestEntity = new StringEntity(
-                    sb.toString(),
+                    jsonContent,
                     ContentType.APPLICATION_JSON);
             HttpPost httppost = new HttpPost(uri);
             httppost.setEntity(requestEntity);
             CloseableHttpResponse httpresponse = this.httpclient.execute(httppost);
-            if (HttpServletResponse.SC_OK == httpresponse.getStatusLine().getStatusCode())
-                return true;
+            HttpEntity entity = httpresponse.getEntity();
+            int code = httpresponse.getStatusLine().getStatusCode();
+            if (entity != null) {
+                String jsonStr = EntityUtils.toString(entity);
+                httpresponse.close();
+                if (code == HttpServletResponse.SC_OK) {
+                    String respToken = new Gson().fromJson(jsonStr, UploadConfirmSuccess.class).getToken();
+                    if (respToken.equals(uploadConfirmDto.getToken()))
+                        return true;
+                    else
+                        logger.error("Upload confirm fail!\nExpected token = {}, response token = {}",
+                                uploadConfirmDto.getToken(), respToken);
+                }
+                else {
+                    UploadConfirmFail uploadConfirmFail = new Gson().fromJson(jsonStr, UploadConfirmFail.class);
+                    logger.error("Upload confirm fail!\nResponse token = {}, message = {}",
+                            uploadConfirmFail.getToken(), uploadConfirmFail.getMsg());
+                }
+            }
+            else {
+                logger.error("Upload confirm fail!\nCode = {}, No token returned.",
+                        code);
+            }
         } catch (URISyntaxException e) {
             e.printStackTrace();
         } catch (ClientProtocolException e) {

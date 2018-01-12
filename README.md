@@ -1,5 +1,5 @@
-### File Uploading Demo
-![File Server UI](fileserver.png)
+### File Server
+![File Server UI](ui.png)
 
 ### Requirement Specifications
 - multiple 
@@ -10,7 +10,13 @@
 ### Architecture
 ![Architecture](arch.png)
 
-### Managed and built by Maven
+### Manage and build
+- maven
 
 ### Deployment
 ![Deployment](deploy.png)
+
+### Example of coordination with another web server.
+![Coordination](coordinate.png)
+
+
