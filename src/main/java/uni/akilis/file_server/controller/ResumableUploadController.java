@@ -3,12 +3,14 @@ package uni.akilis.file_server.controller;
 import com.google.gson.Gson;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
@@ -27,6 +29,7 @@ import uni.akilis.file_server.service.ResumableInfoStorage;
 import uni.akilis.file_server.service.StorageService;
 import uni.akilis.file_server.util.Consts;
 import uni.akilis.file_server.util.HttpUtils;
+import uni.akilis.file_server.util.TimeConsume;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -49,7 +52,18 @@ public class ResumableUploadController {
 
     private static final Logger logger = LoggerFactory.getLogger(ResumableUploadController.class);
 
-    private CloseableHttpClient httpclient = HttpClients.createDefault();
+    /*
+    Configure HTTP client.
+     */
+    private int timeout = 1;
+    private RequestConfig config = RequestConfig.custom()
+            .setConnectionRequestTimeout(timeout * 1000)  // Connection Manager Timeout
+            .setConnectTimeout(timeout * 1000)
+            .setSocketTimeout(timeout * 1000).build();
+    private CloseableHttpClient httpclient =
+            HttpClientBuilder.create().setDefaultRequestConfig(config).build();
+
+    private TimeConsume timeConsume = new TimeConsume();
 
     @Autowired
     private IDao iDao;
@@ -193,6 +207,7 @@ public class ResumableUploadController {
                     ContentType.APPLICATION_JSON);
             HttpPost httppost = new HttpPost(uri);
             httppost.setEntity(requestEntity);
+            this.timeConsume.resetBeginTime();
             CloseableHttpResponse httpresponse = this.httpclient.execute(httppost);
             HttpEntity entity = httpresponse.getEntity();
             int code = httpresponse.getStatusLine().getStatusCode();
@@ -201,8 +216,10 @@ public class ResumableUploadController {
                 httpresponse.close();
                 if (code == HttpServletResponse.SC_OK) {
                     String respToken = new Gson().fromJson(jsonStr, UploadConfirmSuccess.class).getToken();
-                    if (respToken.equals(uploadConfirmDto.getToken()))
+                    if (respToken.equals(uploadConfirmDto.getToken())) {
+                        logger.info("Confirmation time cost: {} millis.", this.timeConsume.getTimeConsume());
                         return true;
+                    }
                     else
                         logger.error("Upload confirm fail!\nExpected token = {}, response token = {}",
                                 uploadConfirmDto.getToken(), respToken);
@@ -218,11 +235,11 @@ public class ResumableUploadController {
                         code);
             }
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            logger.error(e.toString());
         } catch (ClientProtocolException e) {
-            e.printStackTrace();
+            logger.error(e.toString());
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e.toString());
         }
         return false;
     }
