@@ -63,7 +63,6 @@ public class ResumableUploadController {
     private CloseableHttpClient httpclient =
             HttpClientBuilder.create().setDefaultRequestConfig(config).build();
 
-    private TimeConsume timeConsume = new TimeConsume();
 
     @Autowired
     private IDao iDao;
@@ -207,7 +206,7 @@ public class ResumableUploadController {
                     ContentType.APPLICATION_JSON);
             HttpPost httppost = new HttpPost(uri);
             httppost.setEntity(requestEntity);
-            this.timeConsume.resetBeginTime();
+            TimeConsume timeConsume = new TimeConsume();
             CloseableHttpResponse httpresponse = this.httpclient.execute(httppost);
             HttpEntity entity = httpresponse.getEntity();
             int code = httpresponse.getStatusLine().getStatusCode();
@@ -217,7 +216,7 @@ public class ResumableUploadController {
                 if (code == HttpServletResponse.SC_OK) {
                     String respToken = new Gson().fromJson(jsonStr, UploadConfirmSuccess.class).getToken();
                     if (respToken.equals(uploadConfirmDto.getToken())) {
-                        logger.info("Confirmation time cost: {} millis.", this.timeConsume.getTimeConsume());
+                        logger.info("Confirmation time cost: {} millis.", timeConsume.getTimeConsume());
                         return true;
                     }
                     else
