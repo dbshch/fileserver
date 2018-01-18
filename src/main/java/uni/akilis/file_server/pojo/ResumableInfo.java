@@ -84,15 +84,15 @@ public class ResumableInfo {
     }
 
     /**
-     * rename filename with timestamp as prefix.
+     * rename filename just with timestamp as prefix.
      *
      * @return final file.
      */
-    public File renameFile(long timestamp) {
+    public File renameFile() {
         //Upload finished, change filename.
         File file = new File(resumableFilePath);
         String parentPath = file.getAbsoluteFile().getParent();
-        File newFile = new File(parentPath, timestamp + "_" + resumableFilename);
+        File newFile = new File(parentPath, createdAt + "_" + resumableFilename);
         if (file.renameTo(newFile)) {
             return newFile;
         } else

@@ -43,7 +43,8 @@ public class ResumableInfoStorage {
      */
     public synchronized ResumableInfo get(int resumableChunkSize, long resumableTotalSize,
                              String resumableIdentifier, String resumableFilename,
-                             String resumableRelativePath, String resumableFilePath) {
+                             String resumableRelativePath, String resumableFilePath,
+                                          long createdAt) {
 
         ResumableInfo info = mMap.get(resumableIdentifier);
 
@@ -56,7 +57,7 @@ public class ResumableInfoStorage {
             info.resumableFilename      = resumableFilename;
             info.resumableRelativePath  = resumableRelativePath;
             info.resumableFilePath      = resumableFilePath;
-            info.createdAt = System.currentTimeMillis();
+            info.createdAt = createdAt;
 
             mMap.put(resumableIdentifier, info);
         }

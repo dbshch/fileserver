@@ -157,11 +157,10 @@ public class ResumableUploadController {
         //Mark as uploaded.
         info.uploadedChunks.add(new ResumableInfo.ResumableChunkNumber(resumableChunkNumber));
         if (info.checkIfUploadFinished()) { //Check if all chunks uploaded, and change filename
-            long timestamp = System.currentTimeMillis();
-            File newFile = info.renameFile(timestamp);
+            File newFile = info.renameFile();
             ResumableInfoStorage.getInstance().remove(info);
             System.out.println("File stored as " + newFile.getAbsolutePath());
-            UploadFile uploadFile = this.iDao.saveFile(timestamp, info.resumableFilename, newFile.getName(), newFile.length());
+            UploadFile uploadFile = this.iDao.saveFile(info.createdAt, info.resumableFilename, newFile.getName(), newFile.length());
             // notify the web server which user has uploaded which file.
             FileInfo fileInfo = new Gson().fromJson(fileInfoStr, FileInfo.class);
             UploadConfirmDto uploadConfirmDto = new UploadConfirmDto(fileInfo.getToken(), fileInfo.getUserId(), fileInfo.getProjectId(), uploadFile.getId());
@@ -268,13 +267,18 @@ public class ResumableUploadController {
         String resumableIdentifier = request.getParameter("resumableIdentifier");
         String resumableFilename = request.getParameter("resumableFilename");
         String resumableRelativePath = request.getParameter("resumableRelativePath");
-        //Here we add a ".temp" to every upload file to indicate NON-FINISHED
-        String resumableFilePath = new File(base_dir, resumableFilename).getAbsolutePath() + ".temp";
+        /*
+        Here we add a ".temp" to every upload file to indicate NON-FINISHED.
+        And add timestamp as the prefix. The final uploaded file name will replace the timestamp
+        with that ending timestamp.
+         */
+        long timestamp = System.currentTimeMillis();
+        String resumableFilePath = new File(base_dir, timestamp + "_" + resumableFilename).getAbsolutePath() + ".temp";
 
         ResumableInfoStorage storage = ResumableInfoStorage.getInstance();
 
         ResumableInfo info = storage.get(resumableChunkSize, resumableTotalSize,
-                resumableIdentifier, resumableFilename, resumableRelativePath, resumableFilePath);
+                resumableIdentifier, resumableFilename, resumableRelativePath, resumableFilePath, timestamp);
         if (!info.vaild()) {
             storage.remove(info);
             throw new ServletException("Invalid request params.");
