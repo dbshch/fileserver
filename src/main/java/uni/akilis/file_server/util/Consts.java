@@ -16,5 +16,9 @@ public class Consts {
      * Threshold for throttling the uploading when disk is almost full.
      */
     public static final double FISK_SPACE_THRESHOLD = 0.2;
-//    public static final long RESUMABLE_REFRESH_PERIOD = 2 * 60 * 1000;  // For testing
+
+    /**
+     * Suffix of the temporary uploading file's name.
+     */
+    public static final String  SUFFIX = ".temp";
 }

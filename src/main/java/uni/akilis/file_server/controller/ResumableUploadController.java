@@ -11,7 +11,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +37,7 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by leo on 12/27/17.
@@ -63,12 +63,14 @@ public class ResumableUploadController {
     private CloseableHttpClient httpclient =
             HttpClientBuilder.create().setDefaultRequestConfig(config).build();
 
+    // Random for file name
+    private Random random = new Random();
 
     @Autowired
     private IDao iDao;
 
     @Autowired
-    StorageService storageService;
+    private StorageService storageService;
 
     @Autowired
     private UploadWatcher uploadWatcher;
@@ -110,7 +112,14 @@ public class ResumableUploadController {
     public void testChunk(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         int resumableChunkNumber = getResumableChunkNumber(request);
 
-        ResumableInfo info = getResumableInfo(request);
+        ResumableInfo info = null;
+        try {
+            info = getResumableInfo(request);
+        } catch (ServletException e) {
+            logger.warn("Invalid request params.");
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            throw e;
+        }
 
         if (info.uploadedChunks.contains(new ResumableInfo.ResumableChunkNumber(resumableChunkNumber))) {
             response.getWriter().print("Uploaded."); //This Chunk has been Uploaded.
@@ -131,7 +140,14 @@ public class ResumableUploadController {
     public void uploadChunk(HttpServletRequest request, HttpServletResponse response, @RequestParam("fileInfo") String fileInfoStr) throws ServletException, IOException, InterruptedException {
         int resumableChunkNumber = getResumableChunkNumber(request);
 
-        ResumableInfo info = getResumableInfo(request);
+        ResumableInfo info = null;
+        try {
+            info = getResumableInfo(request);
+        } catch (ServletException e) {
+            logger.warn("Invalid request params.");
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            throw e;
+        }
 
         RandomAccessFile raf = new RandomAccessFile(info.resumableFilePath, "rw");
 
@@ -158,8 +174,14 @@ public class ResumableUploadController {
         info.uploadedChunks.add(new ResumableInfo.ResumableChunkNumber(resumableChunkNumber));
         if (info.checkIfUploadFinished()) { //Check if all chunks uploaded, and change filename
             File newFile = info.renameFile();
-            ResumableInfoStorage.getInstance().remove(info);
-            System.out.println("File stored as " + newFile.getAbsolutePath());
+            // check null for new file
+            if (newFile == null) {
+                logger.error("Rename file fail!");
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().print("Rename file fail!");
+                return;
+            }
+            logger.info("File stored as " + newFile.getAbsolutePath());
             UploadFile uploadFile = this.iDao.saveFile(info.createdAt, info.resumableFilename, newFile.getName(), newFile.length());
             // notify the web server which user has uploaded which file.
             FileInfo fileInfo = new Gson().fromJson(fileInfoStr, FileInfo.class);
@@ -167,14 +189,14 @@ public class ResumableUploadController {
             if (!feedWatcher(uploadConfirmDto)) {
                 Thread.sleep(1000);
                 if (!feedWatcher(uploadConfirmDto)) {
-                    logger.warn("Upload notification failed!\nuser id = {}, file id = {}", fileInfo.getUserId(), uploadFile.getId());
-                    // delete inconsistency upload record.
-                    newFile.delete();
-                    this.iDao.removeUploadRecord(uploadFile.getId());
+                    logger.warn("Upload notification fail!\nuser id = {}, file id = {}", fileInfo.getUserId(), uploadFile.getId());
                     response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    response.getWriter().print("Upload notification fail!");
                     return;
                 }
             }
+            // Clean the uploaded file in the memory.
+            ResumableInfoStorage.getInstance().remove(info);
             response.getWriter().print("One File uploaded.");
         } else {
             response.getWriter().print("Upload");
@@ -183,6 +205,7 @@ public class ResumableUploadController {
 
     /**
      * Notify the watcher that a file was uploaded just now.
+     *
      * @param uploadConfirmDto
      * @return
      */
@@ -217,18 +240,15 @@ public class ResumableUploadController {
                     if (respToken.equals(uploadConfirmDto.getToken())) {
                         logger.info("Confirmation time cost: {} millis.", timeConsume.getTimeConsume());
                         return true;
-                    }
-                    else
+                    } else
                         logger.error("Upload confirm fail!\nExpected token = {}, response token = {}",
                                 uploadConfirmDto.getToken(), respToken);
-                }
-                else {
+                } else {
                     UploadConfirmFail uploadConfirmFail = new Gson().fromJson(jsonStr, UploadConfirmFail.class);
                     logger.error("Upload confirm fail!\nResponse token = {}, message = {}",
                             uploadConfirmFail.getToken(), uploadConfirmFail.getMsg());
                 }
-            }
-            else {
+            } else {
                 logger.error("Upload confirm fail!\nCode = {}, No token returned.",
                         code);
             }
@@ -269,11 +289,11 @@ public class ResumableUploadController {
         String resumableRelativePath = request.getParameter("resumableRelativePath");
         /*
         Here we add a ".temp" to every upload file to indicate NON-FINISHED.
-        And add timestamp as the prefix. The final uploaded file name will replace the timestamp
+        And add timestamp and random number as the prefix. The final uploaded file name will replace the timestamp
         with that ending timestamp.
          */
         long timestamp = System.currentTimeMillis();
-        String resumableFilePath = new File(base_dir, timestamp + "_" + resumableFilename).getAbsolutePath() + ".temp";
+        String resumableFilePath = new File(base_dir, timestamp + "_" + this.random.nextInt() + "_" + resumableFilename).getAbsolutePath() + Consts.SUFFIX;
 
         ResumableInfoStorage storage = ResumableInfoStorage.getInstance();
 

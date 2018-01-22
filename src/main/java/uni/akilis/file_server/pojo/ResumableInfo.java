@@ -91,8 +91,10 @@ public class ResumableInfo {
     public File renameFile() {
         //Upload finished, change filename.
         File file = new File(resumableFilePath);
-        String parentPath = file.getAbsoluteFile().getParent();
-        File newFile = new File(parentPath, createdAt + "_" + resumableFilename);
+        int sufIdx = file.getAbsolutePath().lastIndexOf(Consts.SUFFIX);
+        if (sufIdx == -1)
+            return null;
+        File newFile = new File(file.getAbsolutePath().substring(0, sufIdx));
         if (file.renameTo(newFile)) {
             return newFile;
         } else

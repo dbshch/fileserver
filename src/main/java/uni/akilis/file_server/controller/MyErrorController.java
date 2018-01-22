@@ -29,6 +29,10 @@ public class MyErrorController implements ErrorController {
     public String errorHandling(HttpServletResponse response) {
         String ans = "";
         switch (response.getStatus()) {
+            case 403: {
+                ans = "403 Forbidden.";
+                break;
+            }
             case 404: {
                 ans = "404 Something amazing is happening! Please be patient.";
                 break;
