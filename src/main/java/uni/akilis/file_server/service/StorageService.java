@@ -21,7 +21,6 @@ import uni.akilis.file_server.util.Consts;
 
 /**
  * Created by leo on 12/24/17.
- * <br/>
  * Filename here is unique with timestamp and random number as the prefix.
  */
 @Service

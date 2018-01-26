@@ -41,7 +41,6 @@ import java.util.Random;
 
 /**
  * Created by leo on 12/27/17.
- * <br/>
  * Support resumable file uploading. Show uploaded file list and provide downloading.
  */
 @RestController

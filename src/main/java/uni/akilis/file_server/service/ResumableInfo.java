@@ -10,7 +10,6 @@ import java.util.HashSet;
 
 /**
  * by fanxu
- * <br/>
  * Data structure of uploading file in server side.
  */
 public class ResumableInfo {
@@ -84,7 +83,7 @@ public class ResumableInfo {
     }
 
     /**
-     * rename filename just with timestamp as prefix.
+     * rename filename with suffix dropped.
      *
      * @return final file.
      */

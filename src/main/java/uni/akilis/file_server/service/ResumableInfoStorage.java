@@ -9,7 +9,6 @@ import java.util.Map;
 
 /**
  * by fanxu
- * <br/>
  * Manage the uploading files in server side.
  */
 public class ResumableInfoStorage {
