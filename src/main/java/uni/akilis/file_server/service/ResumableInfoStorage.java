@@ -1,7 +1,5 @@
 package uni.akilis.file_server.service;
 
-import org.springframework.scheduling.annotation.Scheduled;
-import uni.akilis.file_server.pojo.ResumableInfo;
 import uni.akilis.file_server.util.Consts;
 
 import java.io.File;

@@ -7,6 +7,7 @@ import uni.akilis.file_server.entity.UploadFile;
 import java.util.List;
 
 /**
+ * Data read/write interfaces.
  * Created by leo on 12/24/17.
  */
 public interface IDao {

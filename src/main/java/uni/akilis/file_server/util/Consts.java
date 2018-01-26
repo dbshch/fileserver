@@ -1,6 +1,7 @@
 package uni.akilis.file_server.util;
 
 /**
+ * Some constants.
  * Created by leo on 12/24/17.
  */
 public class Consts {

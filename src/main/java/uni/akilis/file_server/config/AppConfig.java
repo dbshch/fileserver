@@ -7,6 +7,10 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 import uni.akilis.file_server.filter.TokenInterceptor;
 import uni.akilis.file_server.util.Consts;
 
+/**
+ * Validating the incoming request.
+ * @author leo
+ */
 @Configuration
 public class AppConfig extends WebMvcConfigurerAdapter{
     @Autowired

@@ -9,6 +9,7 @@ import uni.akilis.file_server.repository.UploadFileRepo;
 import java.util.List;
 
 /**
+ * Implement the DAO interface with JPA tech.
  * Created by leo on 12/25/17.
  */
 @Component

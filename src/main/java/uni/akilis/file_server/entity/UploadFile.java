@@ -3,6 +3,7 @@ package uni.akilis.file_server.entity;
 import javax.persistence.*;
 
 /**
+ * Entity represents "upload_file" table.
  * Created by leo on 12/25/17.
  * <br/>
  */

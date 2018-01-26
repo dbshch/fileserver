@@ -23,7 +23,7 @@ import uni.akilis.file_server.config.UploadWatcher;
 import uni.akilis.file_server.dao.IDao;
 import uni.akilis.file_server.dto.*;
 import uni.akilis.file_server.entity.UploadFile;
-import uni.akilis.file_server.pojo.ResumableInfo;
+import uni.akilis.file_server.service.ResumableInfo;
 import uni.akilis.file_server.service.ResumableInfoStorage;
 import uni.akilis.file_server.service.StorageService;
 import uni.akilis.file_server.util.Consts;

@@ -1,4 +1,4 @@
-package uni.akilis.file_server.pojo;
+package uni.akilis.file_server.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

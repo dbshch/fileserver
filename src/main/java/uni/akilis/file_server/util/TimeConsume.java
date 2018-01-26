@@ -1,5 +1,9 @@
 package uni.akilis.file_server.util;
 
+/**
+ * Count the time cost.
+ * @author leo
+ */
 public class TimeConsume {
 	private long beginTimeMillis;
 	private long endTimeMillis;

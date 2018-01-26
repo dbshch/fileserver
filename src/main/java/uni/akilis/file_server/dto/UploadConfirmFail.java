@@ -2,6 +2,10 @@ package uni.akilis.file_server.dto;
 
 import java.io.Serializable;
 
+/**
+ * Object containing upload-notification fail info will accept from the watcher.
+ * @author leo
+ */
 public class UploadConfirmFail implements Serializable {
     private String token;
     /*

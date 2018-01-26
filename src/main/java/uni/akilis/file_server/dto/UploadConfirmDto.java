@@ -2,6 +2,10 @@ package uni.akilis.file_server.dto;
 
 import java.io.Serializable;
 
+/**
+ * Object containing upload-notification info will be transferred to the watcher.
+ * @author leo
+ */
 public class UploadConfirmDto implements Serializable {
     private String token;
     private int userId;

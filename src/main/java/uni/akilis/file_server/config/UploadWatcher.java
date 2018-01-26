@@ -7,7 +7,10 @@ import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.NotNull;
 
-
+/**
+ * Configure the API path of watcher listening for upload event.
+ * @author leo
+ */
 @Component
 @ConfigurationProperties("watcher")
 @Validated

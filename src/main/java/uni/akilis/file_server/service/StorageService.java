@@ -22,7 +22,7 @@ import uni.akilis.file_server.util.Consts;
 /**
  * Created by leo on 12/24/17.
  * <br/>
- * Filename here is unique with timestamp as the prefix.
+ * Filename here is unique with timestamp and random number as the prefix.
  */
 @Service
 public class StorageService {
@@ -55,7 +55,7 @@ public class StorageService {
     }
 
     /**
-     * Initialize the store directory. This method should be called after application launched immediately.
+     * Initialize the store directory. This method should be called once application launched.
      */
     public void init() {
         try {

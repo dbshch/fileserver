@@ -16,6 +16,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+/**
+ * Mocking the notification response from the watcher.
+ * @author leo
+ */
 @RestController
 @RequestMapping("/mock/")
 public class MockController {
