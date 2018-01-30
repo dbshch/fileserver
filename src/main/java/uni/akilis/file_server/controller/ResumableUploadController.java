@@ -233,9 +233,18 @@ public class ResumableUploadController {
             int code = httpresponse.getStatusLine().getStatusCode();
             if (entity != null) {
                 String jsonStr = EntityUtils.toString(entity);
+                if (jsonStr == null) {
+                    logger.error("Upload confirm fail!\nResponse body is null!");
+                    return false;
+                }
                 httpresponse.close();
                 if (code == HttpServletResponse.SC_OK) {
                     String respToken = new Gson().fromJson(jsonStr, UploadConfirmSuccess.class).getToken();
+                    if (respToken == null) {
+                        logger.error("Upload confirm fail!\nExpected token = {}, response token is null! Response body = {}",
+                                uploadConfirmDto.getToken(), jsonStr);
+                        return false;
+                    }
                     if (respToken.equals(uploadConfirmDto.getToken())) {
                         logger.info("Confirmation time cost: {} millis.", timeConsume.getTimeConsume());
                         return true;

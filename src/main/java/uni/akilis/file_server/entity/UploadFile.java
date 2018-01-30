@@ -3,19 +3,19 @@ package uni.akilis.file_server.entity;
 import javax.persistence.*;
 
 /**
- * Entity represents "upload_file" table.
+ * Entity represents "upload file" table.
  * Created by leo on 12/25/17.
  */
 @Entity
-@Table(name = "upload_file")
+@Table(name = "cdobj_file")
 public class UploadFile {
     @Id
+    @Column(name = "fGUID")
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
     /*
     Origin name.
      */
-    @Column(name = "origin_name")
     private String originName;
     /*
     Unique filename.
@@ -24,7 +24,6 @@ public class UploadFile {
     /*
     Timestamp in milliseconds.
      */
-    @Column(name = "created_at")
     private long createdAt;
     /*
     File size in bytes.
