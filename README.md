@@ -52,9 +52,10 @@
 - Configure logging
     - Modify application.properties annotated with `## logging`
 - Configure file server's port
-    - Modify application.properties annotated with `## token`. 
+    - Modify application.properties annotated with `## server`. 
     - **Note that** if Web Server interfaces are mocked then port in application.yml should be consistent with the one in application.properties.
-    
+- Open/close CORS support
+    - Modify application.properties annotated with `## CORS support`. 
 
 ### Example of coordination with another web server.
 ![Coordination](coordinate.png)
