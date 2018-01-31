@@ -58,11 +58,16 @@
 
 <hr/>
 
+<button id="batchDownloadBtn" class="btn btn-info btn-sm" onclick="batchDownload()">
+    Batch Download
+</button>
+
 <div style="margin:10px auto;width: 80%;padding: 5px;">
     <table id="fileTable"
            class="table table-striped">
         <thead>
         <tr>
+            <th><input name="select_all" value="1" type="checkbox"></th>
             <th>file ID</th>
             <th>file name</th>
             <th>file size (bytes)</th>

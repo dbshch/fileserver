@@ -26,7 +26,8 @@ public class JpaDaoImpl implements IDao{
 
     @Override
     public String getFilenameById(int fileId) {
-        return this.uploadFileRepo.findFilenameById(fileId).getFilename();
+        UploadFile uploadFile = this.uploadFileRepo.findFilenameById(fileId);
+        return uploadFile == null? "": uploadFile.getFilename();
     }
 
     @Override

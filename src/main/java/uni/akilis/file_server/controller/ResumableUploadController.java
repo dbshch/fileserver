@@ -99,6 +99,20 @@ public class ResumableUploadController {
                 .body(file);
     }
 
+    @PostMapping(value = "getfiles")
+    public ResponseEntity<Resource> downloadBatchFiles(@RequestParam("fileInfo") String fileInfoStr,
+                                                       @RequestParam("filesId") String filesIdStr,
+                                                       @RequestParam("filename") String filename) {
+        Gson gson = new Gson();
+        FileInfo fileInfo = gson.fromJson(fileInfoStr, FileInfo.class);
+        int[] filesId = gson.fromJson(filesIdStr, int[].class);
+        String zipFilename = filename + "_" + random.nextInt();
+        Resource zipFile = storageService.compressFiles(filesId, zipFilename);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipFile.getFilename() + "\"")
+                .body(zipFile);
+    }
+
     /**
      * Check whether this uploading chunk already exists in server side.
      *
