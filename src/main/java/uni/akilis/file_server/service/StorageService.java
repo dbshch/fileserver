@@ -73,6 +73,12 @@ public class StorageService {
                 Files.createDirectory(rootLocation);
             if (!Files.exists(zipFileLocation))
                 Files.createDirectory(zipFileLocation);
+            else {
+                File zipDir = new File(Consts.ZIP_FILE_DIR);
+                for(File file: zipDir.listFiles()){
+                    file.delete();
+                }
+            }
         } catch (IOException e) {
             throw new RuntimeException("Could not initialize storage!");
         }
@@ -143,5 +149,23 @@ public class StorageService {
             logger.error(e.toString());
             return null;
         }
+    }
+
+    public int zipFilesNumber() {
+        return zipFiles.size();
+    }
+
+
+    public int refreshZipFiles() {
+        int cnt = 0;
+        synchronized (zipFiles) {
+            zipFiles.clear();
+            File zipDir = new File(Consts.ZIP_FILE_DIR);
+            for (File file: zipDir.listFiles()) {
+                if (file.delete())
+                    cnt++;
+            }
+        }
+        return cnt;
     }
 }
