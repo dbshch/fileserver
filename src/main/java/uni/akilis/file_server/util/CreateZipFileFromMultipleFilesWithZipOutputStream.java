@@ -6,8 +6,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
+import org.apache.tools.zip.ZipEntry;
+import org.apache.tools.zip.ZipOutputStream;
 
 /**
  * 动态创建zip文件
@@ -30,7 +30,10 @@ public class CreateZipFileFromMultipleFilesWithZipOutputStream {
 			FileOutputStream fos = new FileOutputStream(zipFile);
 
 			ZipOutputStream zos = new ZipOutputStream(fos);
-			
+
+			// Set Charset
+			zos.setEncoding("UTF-8");
+
 			for (String fileUrl: srcFiles) {
 				
 				File srcFile = new File(fileUrl);

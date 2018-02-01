@@ -36,7 +36,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -92,24 +94,42 @@ public class ResumableUploadController {
      * @return
      */
     @PostMapping("files/{fileId:.+}")
-    public ResponseEntity<Resource> getFile(@PathVariable int fileId) {
+    public ResponseEntity<Resource> getFile(@PathVariable int fileId, HttpServletResponse response) {
         Resource file = storageService.loadFile(fileId);
+        if (file == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            throw new RuntimeException();
+        }
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
+                .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
                 .body(file);
     }
 
     @PostMapping(value = "getfiles")
-    public ResponseEntity<Resource> downloadBatchFiles(@RequestParam("fileInfo") String fileInfoStr,
-                                                       @RequestParam("filesId") String filesIdStr,
-                                                       @RequestParam("filename") String filename) {
-        Gson gson = new Gson();
-        FileInfo fileInfo = gson.fromJson(fileInfoStr, FileInfo.class);
-        int[] filesId = gson.fromJson(filesIdStr, int[].class);
-        String zipFilename = filename + "_" + random.nextInt();
-        Resource zipFile = storageService.compressFiles(filesId, zipFilename);
+    public void downloadBatchFiles(@RequestParam("filesId") int[] filesId,
+                                   @RequestParam("filename") String filename,
+                                   HttpServletResponse response) throws IOException {
+        String zipFilename = filename + "_" + System.currentTimeMillis() + ".zip";
+        String url = storageService.compressFiles(filesId, zipFilename);
+        if (url == null)
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        else if (url.isEmpty())
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        else
+            response.getWriter().print(url);
+    }
+
+    @GetMapping(value = "getZipFile/{url:.+}")
+    public ResponseEntity<Resource> downloadZipFile(@PathVariable String url, HttpServletResponse response) {
+        Resource zipFile = storageService.loadFile(url);
+        if (zipFile == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            throw new RuntimeException();
+        }
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipFile.getFilename() + "\"")
+                .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
                 .body(zipFile);
     }
 

@@ -10,22 +10,23 @@ import uni.akilis.file_server.filter.TokenInterceptor;
 import uni.akilis.file_server.util.Consts;
 
 /**
- *
  * @author leo
  */
 @Configuration
-public class AppConfig extends WebMvcConfigurerAdapter{
+public class AppConfig extends WebMvcConfigurerAdapter {
     @Autowired
     private TokenInterceptor tokenInterceptor;
 
     /**
      * Validating the incoming request.
+     *
      * @param registry
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(tokenInterceptor)
-                .addPathPatterns(Consts.UP_DOWN_PATH + "**");
+                .addPathPatterns(Consts.UP_DOWN_PATH + "**")
+                .excludePathPatterns(Consts.UP_DOWN_PATH + "/getZipFile/**");
     }
 
     @Value("${CORS_TOGGLE}")
@@ -33,6 +34,7 @@ public class AppConfig extends WebMvcConfigurerAdapter{
 
     /**
      * Support CORS for upload and download APIs.
+     *
      * @param registry
      */
     @Override

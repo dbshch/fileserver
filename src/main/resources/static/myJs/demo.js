@@ -6,6 +6,7 @@ var GET_ALL_FILES_PATH = UP_DOWN_PATH + "getallfiles";
 var DOWNLOAD_PATH = UP_DOWN_PATH + "files/";
 var RESUMABLE_UPLOAD_PATH = UP_DOWN_PATH + "resumable";
 var DOWNLOAD_BATCH_FILES = UP_DOWN_PATH + "getfiles";
+var DOWNLOAD_ZIP_FILE = UP_DOWN_PATH + "getZipFile/";
 
 // access service with token and userId.
 var fileInfo = {};
@@ -16,36 +17,45 @@ var fileInfoStr = JSON.stringify(fileInfo);
 
 // selected files to download together
 var rows_selected = [];
+var zipFilename = "bim压缩包";
 var isDownloading = false;
-var zipFilename = "bim"
 
-function updateDataTableSelectAllCtrl(table){
-    var $table             = table.table().node();
-    var $chkbox_all        = $('tbody input[type="checkbox"]', $table);
-    var $chkbox_checked    = $('tbody input[type="checkbox"]:checked', $table);
-    var chkbox_select_all  = $('thead input[name="select_all"]', $table).get(0);
+
+function printSelectedFilesId() {
+    console.log("Selected Files Id:" + rows_selected);
+}
+
+
+function updateDataTableSelectAllCtrl(table) {
+    console.log("updateDataTableSelectAllCtrl triggered!");
+    printSelectedFilesId();
+
+    var $table = table.table().node();
+    var $chkbox_all = $('tbody input[type="checkbox"]', $table);
+    var $chkbox_checked = $('tbody input[type="checkbox"]:checked', $table);
+    var chkbox_select_all = $('thead input[name="select_all"]', $table).get(0);
 
     // If none of the checkboxes are checked
-    if($chkbox_checked.length === 0){
-//		   alert('none of the checkboxes are checked!');
+    if ($chkbox_checked.length === 0) {
+        //alert('none of the checkboxes are checked!');
         chkbox_select_all.checked = false;
-        if('indeterminate' in chkbox_select_all){
+        if ('indeterminate' in chkbox_select_all) {
             chkbox_select_all.indeterminate = false;
         }
 
         // If all of the checkboxes are checked
-    } else if ($chkbox_checked.length === $chkbox_all.length){
-//		   alert('all of the checkboxes are checked!');
+    } else if ($chkbox_checked.length === $chkbox_all.length) {
+        //alert('all of the checkboxes are checked!');
         chkbox_select_all.checked = true;
-        if('indeterminate' in chkbox_select_all){
+        if ('indeterminate' in chkbox_select_all) {
             chkbox_select_all.indeterminate = false;
         }
 
         // If some of the checkboxes are checked
     } else {
-//		   alert('some of the checkboxes are checked!');
+        //alert('some of the checkboxes are checked!');
         chkbox_select_all.checked = true;
-        if('indeterminate' in chkbox_select_all){
+        if ('indeterminate' in chkbox_select_all) {
             chkbox_select_all.indeterminate = true;
         }
     }
@@ -73,7 +83,7 @@ $(document).ready(function () {
         columns: [
             {
                 data: null,
-                'render': function (data, type, full, meta){
+                'render': function (data, type, full, meta) {
                     return '<input type="checkbox">';
                 }
 
@@ -93,12 +103,12 @@ $(document).ready(function () {
                 }
             },
         ],
-        'rowCallback': function(row, data, dataIndex){
+        'rowCallback': function (row, data, dataIndex) {
             // Get row ID
             var rowId = data.fileId;
-            //          alert('rowCallback! rowId is ' + rowId);
+            //alert('rowCallback! rowId is ' + rowId);
             // If row ID is in the list of selected row IDs
-            if($.inArray(rowId, rows_selected) !== -1){
+            if ($.inArray(rowId, rows_selected) !== -1) {
                 $(row).find('input[type="checkbox"]').prop('checked', true);
                 $(row).addClass('selected');
             }
@@ -106,29 +116,29 @@ $(document).ready(function () {
     });
 
     // Handle click on checkbox
-    $('#fileTable tbody').on('click', 'input[type="checkbox"]', function(e){
+    $('#fileTable tbody').on('click', 'input[type="checkbox"]', function (e) {
         var $row = $(this).closest('tr');
 
         // Get row data
         var data = fileTable.row($row).data();
 
         // Get row ID
-        var rowId = data.idstandardAnswer;//**********************************
-        // alert('Handle click on checkbox! rowId is ' + rowId);
+        var rowId = data.fileId;//**********************************
+        //alert('Handle click on checkbox! rowId is ' + rowId);
 
         // Determine whether row ID is in the list of selected row IDs
         var index = $.inArray(rowId, rows_selected);
 
         // If checkbox is checked and row ID is not in list of selected row IDs
-        if(this.checked && index === -1){
+        if (this.checked && index === -1) {
             rows_selected.push(rowId);
 
             // Otherwise, if checkbox is not checked and row ID is in list of selected row IDs
-        } else if (!this.checked && index !== -1){
+        } else if (!this.checked && index !== -1) {
             rows_selected.splice(index, 1);
         }
 
-        if(this.checked){
+        if (this.checked) {
             $row.addClass('selected');
         } else {
             $row.removeClass('selected');
@@ -141,14 +151,14 @@ $(document).ready(function () {
         e.stopPropagation();
     });
 
-    // Handle click on table cells with checkboxes
-    $('#fileTable').on('click', 'tbody td, thead th:first-child', function(e){
+    // Handle click on table cells with checkboxes to trigger click on checkbox
+    $('#fileTable').on('click', 'tbody td, thead th:first-child', function (e) {
         $(this).parent().find('input[type="checkbox"]').trigger('click');
     });
 
     // Handle click on "Select all" control
-    $('thead input[name="select_all"]', fileTable.table().container()).on('click', function(e){
-        if(this.checked){
+    $('thead input[name="select_all"]', fileTable.table().container()).on('click', function (e) {
+        if (this.checked) {
             $('#fileTable tbody input[type="checkbox"]:not(:checked)').trigger('click');
         } else {
             $('#fileTable tbody input[type="checkbox"]:checked').trigger('click');
@@ -159,7 +169,7 @@ $(document).ready(function () {
     });
 
     // Handle table draw event
-    fileTable.on('draw', function(){
+    fileTable.on('draw', function () {
         // Update state of "Select all" control
         updateDataTableSelectAllCtrl(fileTable);
     });
@@ -179,11 +189,11 @@ function planify(data) {
  * download batch files
  */
 function batchDownload() {
-    if ( !isDownloading) {
+    if (isDownloading) {
         alert("You are downloading now! Cancel it first before opening a new one.");
         return;
     }
-    if (rows_selected.length !== 0) {
+    if (rows_selected.length == 0) {
         alert("Choose some files to download!");
         return;
     }
@@ -191,21 +201,29 @@ function batchDownload() {
         alert("Too many files to download!No more than 100 files once.");
         return;
     }
+    console.log("batchDownload triggered!");
+    printSelectedFilesId();
     isDownloading = true;
     $.ajax({
-        url : DOWNLOAD_BATCH_FILES,
-        data: function (data) {
-            data.fileInfo = fileInfoStr;
-            data.filesId = JSON.stringify(rows_selected);
-            data.filename = zipFilename;
+        url: DOWNLOAD_BATCH_FILES,
+        "data": {
+            fileInfo: fileInfoStr,
+            filesId: rows_selected,
+            filename: zipFilename
         },
         type: 'POST',
         traditional: true,
-        error : function(map) {
-            alert("Download fail! Try again.");
+        error: function (msg) {
+            alert("Download fail! Try again." + msg);
             isDownloading = false;
         },
-        success : function(map) {
+        success: function (url) {
+            //download trigger by iframe
+            var iframe = document.createElement("iframe");
+            iframe.setAttribute("src", DOWNLOAD_ZIP_FILE + url);
+            iframe.setAttribute("style", "display: none");
+            document.body.appendChild(iframe);
+
             console.log("Download success.");
             isDownloading = false;
         }
