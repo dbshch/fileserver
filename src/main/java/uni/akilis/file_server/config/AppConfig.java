@@ -25,8 +25,7 @@ public class AppConfig extends WebMvcConfigurerAdapter {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(tokenInterceptor)
-                .addPathPatterns(Consts.UP_DOWN_PATH + "**")
-                .excludePathPatterns(Consts.UP_DOWN_PATH + "/getZipFile/**");
+                .addPathPatterns(Consts.UP_DOWN_PATH + "**");
     }
 
     @Value("${CORS_TOGGLE}")

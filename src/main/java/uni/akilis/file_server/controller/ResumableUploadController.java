@@ -131,7 +131,7 @@ public class ResumableUploadController {
      * @param response
      * @return
      */
-    @GetMapping(value = "getZipFile/{url:.+}")
+    @GetMapping(value = "getzipfile/{url:.+}")
     public ResponseEntity<Resource> downloadZipFile(@PathVariable String url, HttpServletResponse response) {
         Resource zipFile = storageService.loadFile(url);
         if (zipFile == null) {

@@ -129,7 +129,7 @@ public class StorageService {
         Arrays.sort(filesId);
         for (int id : filesId) {
             sb.append(id)
-                    .append(",");
+                    .append("_");
         }
         return sb.toString();
     }

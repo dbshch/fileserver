@@ -6,7 +6,7 @@ var GET_ALL_FILES_PATH = UP_DOWN_PATH + "getallfiles";
 var DOWNLOAD_PATH = UP_DOWN_PATH + "files/";
 var RESUMABLE_UPLOAD_PATH = UP_DOWN_PATH + "resumable";
 var DOWNLOAD_BATCH_FILES = UP_DOWN_PATH + "getfiles";
-var DOWNLOAD_ZIP_FILE = UP_DOWN_PATH + "getZipFile/";
+var DOWNLOAD_ZIP_FILE = UP_DOWN_PATH + "getzipfile/";
 
 // access service with token and userId.
 var fileInfo = {};
@@ -227,11 +227,11 @@ function batchDownload() {
         success: function (url) {
             //download the compressed fle triggered by iframe
             var iframe = document.createElement("iframe");
-            iframe.setAttribute("src", DOWNLOAD_ZIP_FILE + url);
+            iframe.setAttribute("src", encodeURI(DOWNLOAD_ZIP_FILE + url + "?fileInfo=" + fileInfoStr));
             iframe.setAttribute("style", "display: none");
             document.body.appendChild(iframe);
 
-            console.log("Download success.");
+            console.log("Download finished.");
             isDownloading = false;
         }
     });
