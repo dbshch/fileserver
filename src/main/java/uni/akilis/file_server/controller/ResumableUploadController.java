@@ -36,9 +36,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -106,6 +104,13 @@ public class ResumableUploadController {
                 .body(file);
     }
 
+    /**
+     * Compress files into a zip file and return the URL for downloading this zip file next.
+     * @param filesId
+     * @param filename
+     * @param response
+     * @throws IOException
+     */
     @PostMapping(value = "getfiles")
     public void downloadBatchFiles(@RequestParam("filesId") int[] filesId,
                                    @RequestParam("filename") String filename,
@@ -120,6 +125,12 @@ public class ResumableUploadController {
             response.getWriter().print(url);
     }
 
+    /**
+     * Download a zip file.
+     * @param url
+     * @param response
+     * @return
+     */
     @GetMapping(value = "getZipFile/{url:.+}")
     public ResponseEntity<Resource> downloadZipFile(@PathVariable String url, HttpServletResponse response) {
         Resource zipFile = storageService.loadFile(url);

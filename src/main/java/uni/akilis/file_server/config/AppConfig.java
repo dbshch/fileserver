@@ -18,7 +18,7 @@ public class AppConfig extends WebMvcConfigurerAdapter {
     private TokenInterceptor tokenInterceptor;
 
     /**
-     * Validating the incoming request.
+     * Validating some incoming request.
      *
      * @param registry
      */

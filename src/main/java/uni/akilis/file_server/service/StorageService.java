@@ -119,6 +119,11 @@ public class StorageService {
         return url;
     }
 
+    /**
+     * Map a key for batch files.
+     * @param filesId
+     * @return
+     */
     private String convertToZipFileUrl(int[] filesId) {
         StringBuilder sb = new StringBuilder();
         Arrays.sort(filesId);
@@ -129,7 +134,11 @@ public class StorageService {
         return sb.toString();
     }
 
-
+    /**
+     * Load a zip file by its URL.
+     * @param url
+     * @return
+     */
     public Resource loadFile(String url) {
         if (!this.zipFiles.containsKey(url)) {
             logger.error("Zip file not found! url = {}", url);
@@ -151,11 +160,19 @@ public class StorageService {
         }
     }
 
+    /**
+     * Get number of the retained zip files.
+     * @return
+     */
     public int zipFilesNumber() {
         return zipFiles.size();
     }
 
 
+    /**
+     * Clean the outdated zip files.
+     * @return
+     */
     public int refreshZipFiles() {
         int cnt = 0;
         synchronized (zipFiles) {

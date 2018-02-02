@@ -21,11 +21,18 @@ var zipFilename = "bim压缩包";
 var isDownloading = false;
 
 
+/**
+ * Print current selected files ID.
+ */
 function printSelectedFilesId() {
     console.log("Selected Files Id:" + rows_selected);
 }
 
 
+/**
+ * Refresh the view and status of "select_all" checkbox.
+ * @param table DataTables Object.
+ */
 function updateDataTableSelectAllCtrl(table) {
     console.log("updateDataTableSelectAllCtrl triggered!");
     printSelectedFilesId();
@@ -218,7 +225,7 @@ function batchDownload() {
             isDownloading = false;
         },
         success: function (url) {
-            //download trigger by iframe
+            //download the compressed fle triggered by iframe
             var iframe = document.createElement("iframe");
             iframe.setAttribute("src", DOWNLOAD_ZIP_FILE + url);
             iframe.setAttribute("style", "display: none");
