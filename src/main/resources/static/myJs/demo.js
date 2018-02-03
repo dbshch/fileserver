@@ -75,7 +75,7 @@ $(document).ready(function () {
     // select by ID
     fileTable = $('#fileTable').DataTable({
         "processing": true,
-        "order": [[3, 'desc']],
+        "order": [[4, 'desc']],
         ajax: {
             "dataSrc": "",// 返回数组对象
             "url": GET_ALL_FILES_PATH,
