@@ -36,16 +36,16 @@ private static final Logger logger = LoggerFactory.getLogger(MockController.clas
         switch (mockWatcher) {
             case 1:
                 code = HttpServletResponse.SC_OK;
-                jsonContent = gson.toJson(new UploadConfirmSuccess(uploadConfirmDto.getToken()));
+                jsonContent = gson.toJson(new UploadConfirmSuccess(uploadConfirmDto.getFileInfo().getToken()));
                 break;
             case 2:
                 code = HttpServletResponse.SC_BAD_REQUEST;
-                jsonContent = gson.toJson(new UploadConfirmFail(uploadConfirmDto.getToken(),
+                jsonContent = gson.toJson(new UploadConfirmFail(uploadConfirmDto.getFileInfo().getToken(),
                         "Token is denied by server."));
                 break;
             case 3:
                 code = code = HttpServletResponse.SC_OK;
-                jsonContent = gson.toJson(new UploadConfirmSuccess("fake" + uploadConfirmDto.getToken()));
+                jsonContent = gson.toJson(new UploadConfirmSuccess("fake" + uploadConfirmDto.getFileInfo().getToken()));
                 break;
             default:
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

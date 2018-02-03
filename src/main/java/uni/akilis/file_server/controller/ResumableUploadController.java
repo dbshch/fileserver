@@ -217,6 +217,10 @@ public class ResumableUploadController {
         //Mark as uploaded.
         info.uploadedChunks.add(new ResumableInfo.ResumableChunkNumber(resumableChunkNumber));
         if (info.checkIfUploadFinished()) { //Check if all chunks uploaded, and change filename
+            // In order to avoid memory garbage like an "island" and cause the user cannot upload the same file anymore,
+            // we should clean the uploaded file in the memory first.
+            ResumableInfoStorage.getInstance().remove(info);
+
             File newFile = info.renameFile();
             // check null for new file
             if (newFile == null) {
@@ -229,7 +233,7 @@ public class ResumableUploadController {
             UploadFile uploadFile = this.iDao.saveFile(info.createdAt, info.resumableFilename, newFile.getName(), newFile.length());
             // notify the web server which user has uploaded which file.
             FileInfo fileInfo = new Gson().fromJson(fileInfoStr, FileInfo.class);
-            UploadConfirmDto uploadConfirmDto = new UploadConfirmDto(fileInfo.getToken(), fileInfo.getUserId(), fileInfo.getProjectId(), uploadFile.getId());
+            UploadConfirmDto uploadConfirmDto = new UploadConfirmDto(fileInfo, uploadFile.getId());
             if (!feedWatcher(uploadConfirmDto)) {
                 Thread.sleep(1000);
                 if (!feedWatcher(uploadConfirmDto)) {
@@ -239,8 +243,6 @@ public class ResumableUploadController {
                     return;
                 }
             }
-            // Clean the uploaded file in the memory.
-            ResumableInfoStorage.getInstance().remove(info);
             response.getWriter().print("One File uploaded.");
         } else {
             response.getWriter().print("Upload");
@@ -287,15 +289,15 @@ public class ResumableUploadController {
                     String respToken = new Gson().fromJson(jsonStr, UploadConfirmSuccess.class).getToken();
                     if (respToken == null) {
                         logger.error("Upload confirm fail!\nExpected token = {}, response token is null! Response body = {}",
-                                uploadConfirmDto.getToken(), jsonStr);
+                                uploadConfirmDto.getFileInfo().getToken(), jsonStr);
                         return false;
                     }
-                    if (respToken.equals(uploadConfirmDto.getToken())) {
+                    if (respToken.equals(uploadConfirmDto.getFileInfo().getToken())) {
                         logger.info("Confirmation time cost: {} millis.", timeConsume.getTimeConsume());
                         return true;
                     } else
                         logger.error("Upload confirm fail!\nExpected token = {}, response token = {}",
-                                uploadConfirmDto.getToken(), respToken);
+                                uploadConfirmDto.getFileInfo().getToken(), respToken);
                 } else {
                     UploadConfirmFail uploadConfirmFail = new Gson().fromJson(jsonStr, UploadConfirmFail.class);
                     logger.error("Upload confirm fail!\nResponse token = {}, message = {}",

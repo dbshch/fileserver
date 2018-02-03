@@ -7,46 +7,17 @@ import java.io.Serializable;
  * @author leo
  */
 public class UploadConfirmDto implements Serializable {
-    private String token;
-    private int userId;
-    private int projectId;
+    private FileInfo fileInfo;
     private int fileId;
 
     // setter and getter
 
-    public UploadConfirmDto() {
+    public FileInfo getFileInfo() {
+        return fileInfo;
     }
 
-    public UploadConfirmDto(String token, int userId, int projectId, int fileId) {
-        this.token = token;
-        this.userId = userId;
-        this.projectId = projectId;
-        this.fileId = fileId;
-    }
-
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    public int getUserId() {
-        return userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
-
-    public int getProjectId() {
-        return projectId;
-    }
-
-    public void setProjectId(int projectId) {
-        this.projectId = projectId;
+    public void setFileInfo(FileInfo fileInfo) {
+        this.fileInfo = fileInfo;
     }
 
     public int getFileId() {
@@ -56,4 +27,14 @@ public class UploadConfirmDto implements Serializable {
     public void setFileId(int fileId) {
         this.fileId = fileId;
     }
+
+    public UploadConfirmDto() {
+    }
+
+    public UploadConfirmDto (FileInfo fileInfo, int fileId) {
+        this.fileInfo = fileInfo;
+        this.fileId = fileId;
+    }
+
+
 }

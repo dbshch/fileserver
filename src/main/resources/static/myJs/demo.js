@@ -13,6 +13,7 @@ var fileInfo = {};
 fileInfo["token"] = "token";
 fileInfo["userId"] = 9527;
 fileInfo["projectId"] = 1;
+fileInfo["originFileId"] = -1;
 var fileInfoStr = JSON.stringify(fileInfo);
 
 // selected files to download together

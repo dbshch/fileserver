@@ -15,14 +15,9 @@ public class FileInfo implements Serializable{
     private String token;
     private int userId;
     private int projectId;
+    private int originFileId = -1;
 
     public FileInfo(){}
-
-    public FileInfo(String token, int userId, int projectId) {
-        this.token = token;
-        this.userId = userId;
-        this.projectId = projectId;
-    }
 
     // getter and setter
 
@@ -49,5 +44,13 @@ public class FileInfo implements Serializable{
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public int getOriginFileId() {
+        return originFileId;
+    }
+
+    public void setOriginFileId(int originFileId) {
+        this.originFileId = originFileId;
     }
 }
