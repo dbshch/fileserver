@@ -136,6 +136,21 @@ public class ResumableUploadController {
             .body(transData);
     }
 
+    @PostMapping("filesbase64info/{fileId:.+}")
+    public ResponseEntity<String>
+    getbase64withInfo(@PathVariable int fileId, HttpServletResponse response) {
+        Resource file = storageService.loadFile(fileId);
+        String fileencoded = storageService.loadBase64Info(fileId);
+        if (file == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            throw new RuntimeException();
+        }
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                    "attachment; filename=\"" + file.getFilename() + "\"")
+            .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
+            .body(fileencoded);
+    }
     /**
      * Compress files into a zip file and return the URL for downloading this zip file next.
      * @param filesId
