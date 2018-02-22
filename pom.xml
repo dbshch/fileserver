@@ -89,6 +89,12 @@
             <artifactId>ant</artifactId>
             <version>1.9.1</version>
         </dependency>
+
+        <dependency>
+            <groupId>pdfsdk</groupId>
+            <artifactId>gsdk</artifactId>
+            <version>5.3</version>
+        </dependency>
     </dependencies>
 
 
