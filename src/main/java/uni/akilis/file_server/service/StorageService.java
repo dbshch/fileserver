@@ -64,6 +64,26 @@ public class StorageService {
         }
     }
 
+    public String loadBase64(int fileId) {
+        try {
+            String filename = this.iDao.getFilenameById(fileId);
+            Path file = rootLocation.resolve(filename);
+            File filefile = file.toFile();
+            FileInputStream inputFile = new FileInputStream(filefile);
+            byte[] buffer = new byte[(int) filefile.length()];
+            try {
+                inputFile.read(buffer);
+                inputFile.close();
+                return(new String(Base64.encodeBase64(buffer)));
+            } catch (IOException e) {
+                logger.error(e.toString());
+                return null;
+            }
+        } catch (FileNotFoundException e) {
+            logger.error(e.toString());
+            return null;
+        }
+    }
     /**
      * Initialize the store directory. This method should be called once application launched.
      */

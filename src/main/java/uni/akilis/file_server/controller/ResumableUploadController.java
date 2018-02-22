@@ -104,6 +104,38 @@ public class ResumableUploadController {
                 .body(file);
     }
 
+    @PostMapping("filesbase64/{fileId:.+}")
+    public ResponseEntity<String> getbase64File(@PathVariable int fileId, HttpServletResponse response) {
+        Resource file = storageService.loadFile(fileId);        
+        String fileencoded = storageService.loadBase64(fileId);
+        if (file == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            throw new RuntimeException();
+        }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
+                .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream").body(fileencoded);
+    }
+
+    @PostMapping("base64")
+    public ResponseEntity<String> base64(@RequestParam("fileid") int fileid,
+                                         @RequestParam("sqcode") int sqcode,
+                                         HttpServletResponse response) {
+        Resource file = storageService.loadFile(fileid);
+        String fileencoded = storageService.loadBase64Info(fileid);
+        if (file == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            throw new RuntimeException();
+        }
+        String transData =
+            "{\"Result\": \"true\",\"ErrorCode\":\"100\",\"Message\": \"\",\"Data\":{\"Content\":\"" + fileencoded + "\"}}";
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                    "attachment; filename=\"" + file.getFilename() + "\"")
+            .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
+            .body(transData);
+    }
+
     /**
      * Compress files into a zip file and return the URL for downloading this zip file next.
      * @param filesId
