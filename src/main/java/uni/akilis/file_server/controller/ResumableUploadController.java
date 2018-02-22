@@ -38,6 +38,14 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Random;
+import java.util.*;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Base64;
 
 /**
  * Created by leo on 12/27/17.
@@ -296,6 +304,129 @@ public class ResumableUploadController {
         }
     }
 
+    @PostMapping("signed")
+    public ResponseEntity<String> signed(@RequestParam("document_no")
+                                         String doc_no,
+                                         @RequestParam("pdf") String pdf,
+                                         HttpServletResponse response) {
+        int p1 = 0;
+        int p2 = doc_no.indexOf("_", p1);
+        String fileType = doc_no.substring(p1, p2);
+        p1 = p2 + 1;
+        p2 = doc_no.indexOf("_", p1);
+        String fileId = doc_no.substring(p1, p2);
+        String filename = doc_no.substring(p2 + 1);
+        long timestamp = System.currentTimeMillis();
+        String base_dir = UPLOAD_DIR;
+        int rnd = this.random.nextInt();
+        String filepath =
+            new File(base_dir, timestamp + "_" + rnd + "_" + filename)
+                .getAbsolutePath();
+        byte[] decoded = Base64.getDecoder().decode(pdf);
+        File writefile = new File(filepath);
+        try {
+            FileOutputStream fos = new FileOutputStream(writefile);
+            try {
+                fos.write(decoded);
+                fos.close();
+            } catch (IOException e) {
+                response.setStatus(
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                throw new RuntimeException("Could not initialize storage!");
+            }
+        } catch (FileNotFoundException e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            logger.error(e.toString());
+            throw new RuntimeException("failed to open file");
+        }
+        String filestorename = timestamp + "_" + rnd + "_" + filename;
+        UploadFile uploadFile =
+            this.iDao.saveFile(timestamp, filename, filestorename, writefile.length());
+        FileInfo fileInfo = new Gson().fromJson("{\"token\":\"token\"}", FileInfo.class);
+        UploadConfirmDto uploadConfirmDto =
+            new UploadConfirmDto(fileInfo, uploadFile.getId());
+        feedWatcher(uploadConfirmDto, fileInfo.getToken(), Long.parseLong(fileId),
+                    uploadFile.getId(), Integer.parseInt(fileType));
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
+            .body("success");
+    }
+
+    private boolean feedWatcher(UploadConfirmDto uploadConfirmDto, String token,
+                                long originid, long fguid, int filetype) {
+        String jsonContent = String.format("{\"token\":\"%s\",\"originid\":%d,\"fguid\":%d,\"filetype\": %d", token, originid, fguid, filetype);
+        logger.debug("File confirming json string: " + jsonContent);
+        try {
+            URI uri = new URIBuilder()
+                          .setScheme(uploadWatcher.getScheme())
+                          .setHost(uploadWatcher.getHost())
+                          .setPort(uploadWatcher.getPort())
+                          .setPath(uploadWatcher.getPath())
+                          .build();
+            logger.debug("File confirming request URI: " + uri.toASCIIString());
+            StringEntity requestEntity =
+                new StringEntity("fguid="+fguid, ContentType.APPLICATION_FORM_URLENCODED);
+            // StringEntity requestEntity =
+            //     new StringEntity(jsonContent, ContentType.APPLICATION_JSON);
+            HttpPost httppost = new HttpPost(uri);
+            httppost.setEntity(requestEntity);
+            TimeConsume timeConsume = new TimeConsume();
+            CloseableHttpResponse httpresponse =
+                this.httpclient.execute(httppost);
+            HttpEntity entity = httpresponse.getEntity();
+            int code = httpresponse.getStatusLine().getStatusCode();
+            if (entity != null) {
+                String jsonStr = EntityUtils.toString(entity);
+                if (jsonStr == null) {
+                    logger.error(
+                        "Upload confirm fail!\nResponse body is null!");
+                    return false;
+                }
+                httpresponse.close();
+                if (code == HttpServletResponse.SC_OK) {
+                    String respToken =
+                        new Gson()
+                            .fromJson(jsonStr, UploadConfirmSuccess.class)
+                            .getToken();
+                    if (respToken == null) {
+                        logger.error(
+                            "Upload confirm fail!\nExpected token = {}, response token is null! Response body = {}",
+                            uploadConfirmDto.getFileInfo().getToken(), jsonStr);
+                        return false;
+                    }
+                    if (respToken.equals(
+                            uploadConfirmDto.getFileInfo().getToken())) {
+                        logger.info("Confirmation time cost: {} millis.",
+                                    timeConsume.getTimeConsume());
+                        return true;
+                    } else
+                        logger.error(
+                            "Upload confirm fail!\nExpected token = {}, response token = {}",
+                            uploadConfirmDto.getFileInfo().getToken(),
+                            respToken);
+                } else {
+                    UploadConfirmFail uploadConfirmFail =
+                        new Gson().fromJson(jsonStr, UploadConfirmFail.class);
+                    logger.error(
+                        "Upload confirm fail!\nResponse token = {}, message = {}",
+                        uploadConfirmFail.getToken(),
+                        uploadConfirmFail.getMsg());
+                }
+            } else {
+                logger.error(
+                    "Upload confirm fail!\nCode = {}, No token returned.",
+                    code);
+            }
+        } catch (URISyntaxException e) {
+            logger.error(e.toString());
+        } catch (ClientProtocolException e) {
+            logger.error(e.toString());
+        } catch (IOException e) {
+            logger.error(e.toString());
+        }
+        return false;
+    }
+
     /**
      * Notify the watcher that a file was uploaded just now.
      *
@@ -313,7 +444,7 @@ public class ResumableUploadController {
                     .setScheme(uploadWatcher.getScheme())
                     .setHost(uploadWatcher.getHost())
                     .setPort(uploadWatcher.getPort())
-                    .setPath(uploadWatcher.getPath())
+                    .setPath(uploadWatcher.getPath()+"postOneFileInfo")
                     .build();
             logger.debug("File confirming request URI: " + uri.toASCIIString());
             StringEntity requestEntity = new StringEntity(
