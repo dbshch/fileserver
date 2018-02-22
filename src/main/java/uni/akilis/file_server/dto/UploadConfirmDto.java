@@ -9,6 +9,7 @@ import java.io.Serializable;
 public class UploadConfirmDto implements Serializable {
     private FileInfo fileInfo;
     private int fileId;
+    private String fs_token;
 
     // setter and getter
 
@@ -34,6 +35,7 @@ public class UploadConfirmDto implements Serializable {
     public UploadConfirmDto (FileInfo fileInfo, int fileId) {
         this.fileInfo = fileInfo;
         this.fileId = fileId;
+        this.fs_token = "token";
     }
 
 

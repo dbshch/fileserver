@@ -16,6 +16,10 @@ public class FileInfo implements Serializable{
     private int userId;
     private int projectId;
     private int originFileId = -1;
+    public String fileType;
+    public long spid, adid;
+    public String childFileType, discipline, accountName, zsh;
+    public int prosid, orgid, sitemid, conid, fkId;
 
     public FileInfo(){}
 
