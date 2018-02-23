@@ -365,9 +365,7 @@ public class ResumableUploadController {
                           .build();
             logger.debug("File confirming request URI: " + uri.toASCIIString());
             StringEntity requestEntity =
-                new StringEntity("fguid="+fguid, ContentType.APPLICATION_FORM_URLENCODED);
-            // StringEntity requestEntity =
-            //     new StringEntity(jsonContent, ContentType.APPLICATION_JSON);
+                new StringEntity(jsonContent, ContentType.APPLICATION_JSON);
             HttpPost httppost = new HttpPost(uri);
             httppost.setEntity(requestEntity);
             TimeConsume timeConsume = new TimeConsume();
