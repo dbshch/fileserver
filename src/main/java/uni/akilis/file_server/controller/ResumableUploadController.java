@@ -127,10 +127,10 @@ public class ResumableUploadController {
 
     @PostMapping("base64")
     public ResponseEntity<String> base64(@RequestParam("fileid") int fileid,
-                                         @RequestParam("sqcode") int sqcode,
+                                         @RequestParam("sqcode") String sqcode,
                                          HttpServletResponse response) {
         Resource file = storageService.loadFile(fileid);
-        String fileencoded = storageService.loadBase64Info(fileid);
+        String fileencoded = storageService.loadBase64(fileid);
         if (file == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             throw new RuntimeException();
