@@ -289,16 +289,19 @@ public class ResumableUploadController {
             // notify the web server which user has uploaded which file.
             FileInfo fileInfo = new Gson().fromJson(fileInfoStr, FileInfo.class);
             UploadConfirmDto uploadConfirmDto = new UploadConfirmDto(fileInfo, uploadFile.getId());
-            if (!feedWatcher(uploadConfirmDto)) {
-                Thread.sleep(1000);
-                if (!feedWatcher(uploadConfirmDto)) {
-                    logger.warn("Upload notification fail!\nuser id = {}, file id = {}", fileInfo.getUserId(), uploadFile.getId());
-                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    response.getWriter().print("Upload notification fail!");
-                    return;
-                }
+            String retMsg;
+            logger.warn(String.valueOf(fileInfo.getUserId()));
+            retMsg = feedWatcher(uploadConfirmDto);
+            if (retMsg != "succ") {
+                logger.warn(
+                    "Upload notification fail!\nuser id = {}, file id = {}",
+                    fileInfo.getUserId(), uploadFile.getId());
+                response.setStatus(
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().print(retMsg);
+                return;
             }
-            response.getWriter().print("One File uploaded.");
+            response.getWriter().print(String.valueOf(uploadFile.getId()));
         } else {
             response.getWriter().print("Upload");
         }
@@ -431,10 +434,11 @@ public class ResumableUploadController {
      * @param uploadConfirmDto
      * @return
      */
-    private boolean feedWatcher(UploadConfirmDto uploadConfirmDto) {
+    private String feedWatcher(UploadConfirmDto uploadConfirmDto) {
         /*
         Build the json parameter to transfer
          */
+        logger.warn("check upload");
         String jsonContent = new Gson().toJson(uploadConfirmDto);
         logger.debug("File confirming json string: " + jsonContent);
         try {
@@ -456,24 +460,29 @@ public class ResumableUploadController {
             int code = httpresponse.getStatusLine().getStatusCode();
             if (entity != null) {
                 String jsonStr = EntityUtils.toString(entity);
+                logger.warn(jsonStr);
                 if (jsonStr == null) {
                     logger.error("Upload confirm fail!\nResponse body is null!");
-                    return false;
+                    return "connection fail";
                 }
                 httpresponse.close();
-                if (code == HttpServletResponse.SC_OK) {
-                    String respToken = new Gson().fromJson(jsonStr, UploadConfirmSuccess.class).getToken();
+                UploadConfirmSuccess retMsg =
+                    new Gson().fromJson(jsonStr, UploadConfirmSuccess.class);
+                if (retMsg.getCode().equals("200")) {
+                    String respToken = retMsg.getToken();
                     if (respToken == null) {
                         logger.error("Upload confirm fail!\nExpected token = {}, response token is null! Response body = {}",
                                 uploadConfirmDto.getFileInfo().getToken(), jsonStr);
-                        return false;
+                        return "fail";
                     }
                     if (respToken.equals(uploadConfirmDto.getFileInfo().getToken())) {
                         logger.info("Confirmation time cost: {} millis.", timeConsume.getTimeConsume());
-                        return true;
-                    } else
+                        return "succ";
+                    } else{
                         logger.error("Upload confirm fail!\nExpected token = {}, response token = {}",
                                 uploadConfirmDto.getFileInfo().getToken(), respToken);
+                        return "token error";
+                    }
                 } else {
                     UploadConfirmFail uploadConfirmFail = new Gson().fromJson(jsonStr, UploadConfirmFail.class);
                     logger.error("Upload confirm fail!\nResponse token = {}, message = {}",
@@ -490,7 +499,7 @@ public class ResumableUploadController {
         } catch (IOException e) {
             logger.error(e.toString());
         }
-        return false;
+        return "fail";
     }
 
     /**
