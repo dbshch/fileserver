@@ -89,6 +89,7 @@ public class StorageService {
             Path file = rootLocation.resolve(filename);
             Resource resource = new UrlResource(file.toUri());
             if (resource.exists()) {
+                logger.info("Getting file {}", filename);
                 return resource;
             } else {
                 logger.error("File not exists: {}", filename);
@@ -110,6 +111,7 @@ public class StorageService {
             try {
                 inputFile.read(buffer);
                 inputFile.close();
+                logger.info("Getting file {}'s base64'", filename);
                 return(new String(Base64.encodeBase64(buffer)));
             } catch (IOException e) {
                 logger.error(e.toString());
