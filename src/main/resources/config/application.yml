@@ -2,5 +2,5 @@
 watcher:
   scheme: http
   host: 202.121.178.131
-  port: 1382
-  path: "/upload/"
+  port: 80
+  path: "/urp/upload/"
