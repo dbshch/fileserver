@@ -192,8 +192,8 @@ public class StorageService {
                 inputFile.close();
                 String encoded = new String(Base64.encodeBase64(buffer));
                 String returnData = String.format(
-                    "{\"x\":%f, \"y\":%f, \"Content\":\"%s\"}", width/72*2.54,
-                    height/72*2.54, encoded);
+                    "{\"x\":%f, \"y\":%f, \"pdf\":\"%s\"}", width/72*25.4,
+                    height/72*25.4, encoded);
                 return returnData;
             } catch (IOException e) {
                 logger.error(e.toString());
