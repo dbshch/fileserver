@@ -4,3 +4,6 @@ watcher:
   host: 202.121.178.131
   port: 1382
   path: "/upload/"
+  api_key: "ywxt"
+  api_secret: "12345678"
+  sign_port: 1480
