@@ -324,6 +324,13 @@ public class ResumableUploadController {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             throw new RuntimeException();
         }
+        try {
+            byte[] bytes = doc_no.getBytes("UTF-8");
+            doc_no = Base64.getEncoder().encodeToString(bytes);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        logger.debug(doc_no);
         String loadfile = storageService.loadBase64Info(fileid);
         loadFileInfo loadinfo = new Gson().fromJson(loadfile, loadFileInfo.class);
         float signx, signy;
@@ -454,10 +461,17 @@ public class ResumableUploadController {
             String position = String.format(
                 ",\"position\":{\"page\":\"1\",\"x\":\"%f\",\"y\":\"%f\"}",
                 signx, signy);
+            String doc_no = conf.getFileName();
+            try {
+                byte[] bytes = doc_no.getBytes("UTF-8");
+                doc_no = Base64.getEncoder().encodeToString(bytes);
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
             String doc_data = String.format(
                 "{\"document_no\" : \"%s\",\"pdf\":\"%s\",\"type\":\"position\",\"position\":{\"page\":1,\"x\":\"%f\",\"y\":\"%f\"}}",
                 conf.getFileType() + "_" + conf.getId() + "_" +
-                    conf.getFileName(),
+                    doc_no,
                 loadinfo.getPdf(), signx, signy);
             if (flg == 0){
                 fileData = fileData + doc_data;
@@ -533,6 +547,14 @@ public class ResumableUploadController {
         p2 = doc_no.indexOf("_", p1);
         String fileId = doc_no.substring(p1, p2);
         String filename = doc_no.substring(p2 + 1);
+        byte[] decoded = null;
+        try {
+            byte[] bytes = filename.getBytes("UTF-8");
+            decoded = Base64.getDecoder().decode(bytes);
+        } catch (Exception e) {
+            e.printStackTrace();            
+        }
+        filename = new String(decoded, "UTF-8");
         long timestamp = System.currentTimeMillis();
         String base_dir = UPLOAD_DIR;
         int rnd = this.random.nextInt();
@@ -590,6 +612,14 @@ public class ResumableUploadController {
             p2 = doc_no.indexOf("_", p1);
             String fileId = doc_no.substring(p1, p2);
             String filename = doc_no.substring(p2 + 1);
+            byte[] decoded = null;
+            try {
+                byte[] bytes = filename.getBytes("UTF-8");
+                decoded = Base64.getDecoder().decode(bytes);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            filename = new String(decoded, "UTF-8");
             long timestamp = System.currentTimeMillis();
             String base_dir = UPLOAD_DIR;
             int rnd = this.random.nextInt();
