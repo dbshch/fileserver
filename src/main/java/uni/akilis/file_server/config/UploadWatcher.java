@@ -20,11 +20,13 @@ public class UploadWatcher {
 
     private String host = "localhost";
 
-    @NotNull
-    private int port = 8083;
+    @NotNull private int port = 8080;
+    private int sign_port;
 
     @NotEmpty
     private String path;
+    private String api_key;
+    private String api_secret;
 
     // getter and setter
 
@@ -47,6 +49,9 @@ public class UploadWatcher {
     public int getPort() {
         return port;
     }
+    public void setSignPort(int sign_port) { this.sign_port = sign_port; }
+
+    public int getSignPort() { return sign_port; }
 
     public void setPort(int port) {
         this.port = port;
@@ -56,7 +61,17 @@ public class UploadWatcher {
         return path;
     }
 
+    public String getApi_key() { return api_key; }
+
+    public String getApi_secret() { return api_secret; }
+
     public void setPath(String path) {
         this.path = path;
     }
+
+    public void setApi_secret(String api_secret) {
+        this.api_secret = api_secret;
+    }
+
+    public void setApi_key(String api_key) { this.api_key = api_key; }
 }

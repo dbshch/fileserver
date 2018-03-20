@@ -1,6 +1,7 @@
 package uni.akilis.file_server.controller;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.config.RequestConfig;
@@ -290,7 +291,7 @@ public class ResumableUploadController {
             FileInfo fileInfo = new Gson().fromJson(fileInfoStr, FileInfo.class);
             UploadConfirmDto uploadConfirmDto = new UploadConfirmDto(fileInfo, uploadFile.getId());
             String retMsg;
-            logger.warn(String.valueOf(fileInfo.getUserId()));
+            logger.info(String.valueOf(fileInfo.getUserId()));
             retMsg = feedWatcher(uploadConfirmDto);
             if (retMsg != "succ") {
                 logger.warn(
@@ -307,11 +308,238 @@ public class ResumableUploadController {
         }
     }
 
+    /**
+     * Sign one file.
+     *
+     */
+    @PostMapping("sign")
+    public ResponseEntity<String>
+    sign(@RequestParam("document_no") String doc_no,
+         @RequestParam("fileid") int fileid, @RequestParam("x") float x,
+         @RequestParam("y") float y, @RequestParam("isManual") int isManual,
+         @RequestParam("redirect_url") String redirect_url,
+         HttpServletRequest request, HttpServletResponse response) {
+        Resource file = storageService.loadFile(fileid);
+        if (file == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            throw new RuntimeException();
+        }
+        try {
+            byte[] bytes = doc_no.getBytes("UTF-8");
+            doc_no = Base64.getEncoder().encodeToString(bytes);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        logger.debug(doc_no);
+        String loadfile = storageService.loadBase64Info(fileid);
+        loadFileInfo loadinfo = new Gson().fromJson(loadfile, loadFileInfo.class);
+        float signx, signy;
+        signx = (loadinfo.getwidth() - x - 80) / loadinfo.getwidth() * 50000;
+        signy = y / loadinfo.getheight() * 50000;
+        String position = String.format(
+            ",\"position\":{\"page\":\"1\",\"x\":\"%f\",\"y\":\"%f\"}", signx,
+            signy);
+        String data;
+        String host = request.getServerName();
+        int portNumber = request.getServerPort();
+        host = host + ":" + String.valueOf(portNumber);
+        logger.debug(host);
+        if (isManual == 0) {
+            logger.debug("x: {}, y: {}", signx, signy);
+            data = String.format(
+                "{\"api_key\" : \"%s\",\"api_secret\" : \"%s\",\"seal\": {\"document_no\" : \"%s\",\"pdf\":\"%s\",\"return_url\":\"%s\",\"redirect_url\":\"%s\",\"show_page\":%s,\"type\":\"%s\"%s}}",
+                uploadWatcher.getApi_key(), uploadWatcher.getApi_secret(), doc_no, loadinfo.getPdf(),
+                "http://" + host + "/updown/signed",
+                redirect_url, "false", "position", position);
+        }
+        else{
+            data = String.format(
+                "{\"api_key\" : \"%s\",\"api_secret\" : \"%s\",\"seal\": {\"document_no\" : \"%s\",\"pdf\":\"%s\",\"return_url\":\"%s\",\"redirect_url\":\"%s\",\"show_page\":%s,\"type\":\"%s\"%s}}",
+                uploadWatcher.getApi_key(), uploadWatcher.getApi_secret(),
+                doc_no, loadinfo.getPdf(),
+                "http://" + host + "/updown/signed",
+                redirect_url, "true", "auto", "");
+        }
+        try {
+            URI uri = new URIBuilder()
+                          .setScheme("http")
+                          .setHost(uploadWatcher.getHost())
+                          .setPort(uploadWatcher.getSignPort())
+                          .setPath("/seal/userSignExt")
+                          .build();
+            StringEntity requestEntity =
+                new StringEntity(data, ContentType.APPLICATION_JSON);
+            HttpPost httppost = new HttpPost(uri);
+            httppost.setEntity(requestEntity);
+            TimeConsume timeConsume = new TimeConsume();
+            CloseableHttpResponse httpresponse =
+                this.httpclient.execute(httppost);
+            HttpEntity entity = httpresponse.getEntity();
+            int code = httpresponse.getStatusLine().getStatusCode();
+            if (entity != null) {
+                String jsonStr = EntityUtils.toString(entity);
+                logger.debug(jsonStr);
+                httpresponse.close();
+                if (code == HttpServletResponse.SC_OK) {
+                    signRet resp =
+                        new Gson()
+                            .fromJson(jsonStr, signRet.class);
+                    return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_TYPE,
+                                "application/octet-stream")
+                        .body(resp.getSign_url());
+                }
+            } else {
+                logger.error(
+                    "Sign error {}, no result returned.",
+                    code);
+            }
+        } catch (URISyntaxException e) {
+            logger.error(e.toString());
+        } catch (ClientProtocolException e) {
+            logger.error(e.toString());
+        } catch (IOException e) {
+            logger.error(e.toString());
+        }
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
+            .body("fail");
+    }
+
+    /**
+     * Redirect the page to the specified one.
+     *
+     */
+    @PostMapping("redirectSign/{urlBase64:.+}")
+    public ResponseEntity<String>
+    redirectSign(@PathVariable String urlBase64,
+                 @RequestBody String jsonStr,
+                 HttpServletResponse response) {
+                     logger.debug(jsonStr);
+        byte[] decoded = null;
+        try {
+            byte[] bytes = urlBase64.getBytes("UTF-8");
+            decoded = Base64.getDecoder().decode(bytes);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        String url = new String(decoded);
+        return ResponseEntity.ok()
+            .body("<html><script language=\"javascript\">window.location.replace(\"" + url + "\")</script></html>");
+    }
+
+    /**
+     * Sign a series of files.
+     *
+     */
+    @PostMapping("batchSign")
+    public ResponseEntity<String>
+    sign(@RequestParam("fileConf") String fileConf,
+         @RequestParam("redirect_url") String redirect_url,
+         HttpServletRequest request, HttpServletResponse response) {
+        String host = request.getServerName();
+        int portNumber = request.getServerPort();
+        host = host + ":" + String.valueOf(portNumber);
+        List<signFileConf> filesConf = new Gson().fromJson(
+            fileConf, new TypeToken<List<signFileConf>>() {}.getType());
+        String fileData = "[";
+        int flg = 0;
+        for (signFileConf conf : filesConf){
+            Resource file = storageService.loadFile(Integer.parseInt(conf.getId()));
+            if (file == null) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                throw new RuntimeException();
+            }
+            String loadfile =
+                storageService.loadBase64Info(Integer.parseInt(conf.getId()));
+            loadFileInfo loadinfo =
+                new Gson().fromJson(loadfile, loadFileInfo.class);
+            float signx, signy;
+            signx = (loadinfo.getwidth() - conf.getx() - 80) /
+                    loadinfo.getwidth() * 50000;
+            signy = conf.gety() / loadinfo.getheight() * 50000;
+            String position = String.format(
+                ",\"position\":{\"page\":\"1\",\"x\":\"%f\",\"y\":\"%f\"}",
+                signx, signy);
+            String doc_no = conf.getFileName();
+            try {
+                byte[] bytes = doc_no.getBytes("UTF-8");
+                doc_no = Base64.getEncoder().encodeToString(bytes);
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            String doc_data = String.format(
+                "{\"document_no\" : \"%s\",\"pdf\":\"%s\",\"type\":\"position\",\"position\":{\"page\":1,\"x\":\"%f\",\"y\":\"%f\"}}",
+                conf.getFileType() + "_" + conf.getId() + "_" +
+                    doc_no,
+                loadinfo.getPdf(), signx, signy);
+            if (flg == 0){
+                fileData = fileData + doc_data;
+                flg = 1;
+            }
+            else{
+                fileData = fileData + "," + doc_data;
+            }
+        }
+        fileData = fileData + "]";
+
+        String data = String.format(
+            "{\"api_key\" : \"%s\",\"api_secret\" : \"%s\",\"return_url\":\"%s\",\"redirect_url\":\"%s\",\"seal\": %s}",
+            uploadWatcher.getApi_key(), uploadWatcher.getApi_secret(),
+            "http://" + host + "/updown/batchSigned",
+            redirect_url, fileData);
+        try {
+            URI uri = new URIBuilder()
+                          .setScheme("http")
+                          .setHost(uploadWatcher.getHost())
+                          .setPort(uploadWatcher.getSignPort())
+                          .setPath("/seal/userMoreSign")
+                          .build();
+            StringEntity requestEntity =
+                new StringEntity(data, ContentType.APPLICATION_JSON);
+            HttpPost httppost = new HttpPost(uri);
+            httppost.setEntity(requestEntity);
+            CloseableHttpResponse httpresponse =
+                this.httpclient.execute(httppost);
+            HttpEntity entity = httpresponse.getEntity();
+            int code = httpresponse.getStatusLine().getStatusCode();
+            if (entity != null) {
+                String jsonStr = EntityUtils.toString(entity);
+                logger.debug(jsonStr);
+                httpresponse.close();
+                if (code == HttpServletResponse.SC_OK) {
+                    signRet resp = new Gson().fromJson(jsonStr, signRet.class);
+                    return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_TYPE,
+                                "application/octet-stream")
+                        .body(resp.getSign_url());
+                }
+            } else {
+                logger.error("Sign error {}, no result returned.", code);
+            }
+        } catch (URISyntaxException e) {
+            logger.error(e.toString());
+        } catch (ClientProtocolException e) {
+            logger.error(e.toString());
+        } catch (IOException e) {
+            logger.error(e.toString());
+        }
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
+            .body("fail");
+    }
+
+    /**
+     * Fetch the signed file from CA server.
+     *
+     */
     @PostMapping("signed")
-    public ResponseEntity<String> signed(@RequestParam("document_no")
-                                         String doc_no,
-                                         @RequestParam("pdf") String pdf,
+    public ResponseEntity<String> signed(@RequestBody String jsonStr,
                                          HttpServletResponse response) {
+        getSignedFile resp = new Gson().fromJson(jsonStr, getSignedFile.class);
+        String doc_no = resp.getdoc_no();
+        String pdf = resp.getpdf();
+        logger.info("getting signed file {}", doc_no);
         int p1 = 0;
         int p2 = doc_no.indexOf("_", p1);
         String fileType = doc_no.substring(p1, p2);
@@ -319,6 +547,14 @@ public class ResumableUploadController {
         p2 = doc_no.indexOf("_", p1);
         String fileId = doc_no.substring(p1, p2);
         String filename = doc_no.substring(p2 + 1);
+        byte[] decoded = null;
+        try {
+            byte[] bytes = filename.getBytes("UTF-8");
+            decoded = Base64.getDecoder().decode(bytes);
+        } catch (Exception e) {
+            e.printStackTrace();            
+        }
+        filename = new String(decoded, "UTF-8");
         long timestamp = System.currentTimeMillis();
         String base_dir = UPLOAD_DIR;
         int rnd = this.random.nextInt();
@@ -345,9 +581,11 @@ public class ResumableUploadController {
         String filestorename = timestamp + "_" + rnd + "_" + filename;
         UploadFile uploadFile =
             this.iDao.saveFile(timestamp, filename, filestorename, writefile.length());
+        logger.info("saving file {}.", filename);
         FileInfo fileInfo = new Gson().fromJson("{\"token\":\"token\"}", FileInfo.class);
         UploadConfirmDto uploadConfirmDto =
             new UploadConfirmDto(fileInfo, uploadFile.getId());
+        logger.info("confirming upload new signed fileid {}", uploadFile.getId());
         feedWatcher(uploadConfirmDto, fileInfo.getToken(), Long.parseLong(fileId),
                     uploadFile.getId(), Integer.parseInt(fileType));
         return ResponseEntity.ok()
@@ -355,16 +593,92 @@ public class ResumableUploadController {
             .body("success");
     }
 
+    /**
+     * Fetch batch of signed files from CA server.
+     *
+     */
+    @PostMapping("batchSigned")
+    public ResponseEntity<String> batchSigned(@RequestBody String jsonStr,
+                                         HttpServletResponse response) {
+        getBatchSignedFile resp = new Gson().fromJson(jsonStr, getBatchSignedFile.class);
+        for (getBatchSignedFile.signPdf content : resp.getPdfList()) {
+            String doc_no = content.getdoc_no();
+            String pdf = content.get_pdf();
+            logger.info("getting signed file {}", doc_no);
+            int p1 = 0;
+            int p2 = doc_no.indexOf("_", p1);
+            String fileType = doc_no.substring(p1, p2);
+            p1 = p2 + 1;
+            p2 = doc_no.indexOf("_", p1);
+            String fileId = doc_no.substring(p1, p2);
+            String filename = doc_no.substring(p2 + 1);
+            byte[] decoded = null;
+            try {
+                byte[] bytes = filename.getBytes("UTF-8");
+                decoded = Base64.getDecoder().decode(bytes);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            filename = new String(decoded, "UTF-8");
+            long timestamp = System.currentTimeMillis();
+            String base_dir = UPLOAD_DIR;
+            int rnd = this.random.nextInt();
+            String filepath =
+                new File(base_dir, timestamp + "_" + rnd + "_" + filename)
+                    .getAbsolutePath();
+            byte[] decoded = Base64.getDecoder().decode(pdf);
+            File writefile = new File(filepath);
+            try {
+                FileOutputStream fos = new FileOutputStream(writefile);
+                try {
+                    fos.write(decoded);
+                    fos.close();
+                } catch (IOException e) {
+                    response.setStatus(
+                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    throw new RuntimeException("Could not initialize storage!");
+                }
+            } catch (FileNotFoundException e) {
+                response.setStatus(
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                logger.error(e.toString());
+                throw new RuntimeException("failed to open file");
+            }
+            String filestorename = timestamp + "_" + rnd + "_" + filename;
+            UploadFile uploadFile = this.iDao.saveFile(
+                timestamp, filename, filestorename, writefile.length());
+            logger.info("saving file {}.", filename);
+            FileInfo fileInfo =
+                new Gson().fromJson("{\"token\":\"token\"}", FileInfo.class);
+            UploadConfirmDto uploadConfirmDto =
+                new UploadConfirmDto(fileInfo, uploadFile.getId());
+            logger.info("confirming upload new signed fileid {}",
+                        uploadFile.getId());
+            feedWatcher(uploadConfirmDto, fileInfo.getToken(),
+                        Long.parseLong(fileId), uploadFile.getId(),
+                        Integer.parseInt(fileType));
+        }
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
+            .body("success");
+    }
+
+    /**
+     * Notify the watcher that a file was signed just now.
+     *
+     * @param uploadConfirmDto
+     * @return
+     */
     private boolean feedWatcher(UploadConfirmDto uploadConfirmDto, String token,
                                 long originid, long fguid, int filetype) {
-        String jsonContent = String.format("{\"token\":\"%s\",\"originid\":%d,\"fguid\":%d,\"filetype\": %d", token, originid, fguid, filetype);
+        String jsonContent = String.format("{\"token\":\"%s\",\"originid\":%d,\"fguid\":%d,\"filetype\": %d}", token, originid, fguid, filetype);
         logger.debug("File confirming json string: " + jsonContent);
         try {
             URI uri = new URIBuilder()
                           .setScheme(uploadWatcher.getScheme())
                           .setHost(uploadWatcher.getHost())
                           .setPort(uploadWatcher.getPort())
-                          .setPath(uploadWatcher.getPath())
+                          .setPath("/update/updateSignFile")
                           .build();
             logger.debug("File confirming request URI: " + uri.toASCIIString());
             StringEntity requestEntity =
@@ -385,26 +699,15 @@ public class ResumableUploadController {
                 }
                 httpresponse.close();
                 if (code == HttpServletResponse.SC_OK) {
-                    String respToken =
+                    String resp =
                         new Gson()
                             .fromJson(jsonStr, UploadConfirmSuccess.class)
-                            .getToken();
-                    if (respToken == null) {
+                            .getCode();
+                    if (resp.equals("201")) {
                         logger.error(
-                            "Upload confirm fail!\nExpected token = {}, response token is null! Response body = {}",
-                            uploadConfirmDto.getFileInfo().getToken(), jsonStr);
+                            "Upload confirm fail!\n Response body = {}", jsonStr);
                         return false;
                     }
-                    if (respToken.equals(
-                            uploadConfirmDto.getFileInfo().getToken())) {
-                        logger.info("Confirmation time cost: {} millis.",
-                                    timeConsume.getTimeConsume());
-                        return true;
-                    } else
-                        logger.error(
-                            "Upload confirm fail!\nExpected token = {}, response token = {}",
-                            uploadConfirmDto.getFileInfo().getToken(),
-                            respToken);
                 } else {
                     UploadConfirmFail uploadConfirmFail =
                         new Gson().fromJson(jsonStr, UploadConfirmFail.class);
@@ -438,7 +741,7 @@ public class ResumableUploadController {
         /*
         Build the json parameter to transfer
          */
-        logger.warn("check upload");
+        logger.debug("check upload");
         String jsonContent = new Gson().toJson(uploadConfirmDto);
         logger.debug("File confirming json string: " + jsonContent);
         try {
@@ -460,7 +763,7 @@ public class ResumableUploadController {
             int code = httpresponse.getStatusLine().getStatusCode();
             if (entity != null) {
                 String jsonStr = EntityUtils.toString(entity);
-                logger.warn(jsonStr);
+                logger.debug(jsonStr);
                 if (jsonStr == null) {
                     logger.error("Upload confirm fail!\nResponse body is null!");
                     return "connection fail";

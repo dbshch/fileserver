@@ -4,3 +4,6 @@ watcher:
   host: 172.16.83.11
   port: 80
   path: "/urp/upload/"
+  api_key: "ywxt"
+  api_secret: "12345678"
+  sign_port: 1480
