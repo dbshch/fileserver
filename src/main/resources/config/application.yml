@@ -6,4 +6,4 @@ watcher:
   path: "/upload/"
   api_key: "ywxt"
   api_secret: "12345678"
-  sign_port: 1480
+  sign_port: 80
