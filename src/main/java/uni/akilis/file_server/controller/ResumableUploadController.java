@@ -46,6 +46,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.Base64;
 
 /**
@@ -320,18 +321,19 @@ public class ResumableUploadController {
          @RequestParam("redirect_url") String redirect_url,
          HttpServletRequest request, HttpServletResponse response) {
         Resource file = storageService.loadFile(fileid);
+        String loadfile = storageService.loadBase64Info(fileid);
         if (file == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             throw new RuntimeException();
         }
+        logger.debug("Document_no {}", doc_no);
         try {
             byte[] bytes = doc_no.getBytes("UTF-8");
             doc_no = Base64.getEncoder().encodeToString(bytes);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-        logger.debug(doc_no);
-        String loadfile = storageService.loadBase64Info(fileid);
+        logger.debug("Base64 encoded doc_no {}", doc_no);
         loadFileInfo loadinfo = new Gson().fromJson(loadfile, loadFileInfo.class);
         float signx, signy;
         signx = (loadinfo.getwidth() - x - 80) / loadinfo.getwidth() * 50000;
@@ -365,7 +367,7 @@ public class ResumableUploadController {
                           .setScheme("http")
                           .setHost(uploadWatcher.getHost())
                           .setPort(uploadWatcher.getSignPort())
-                          .setPath("/seal/userSignExt")
+                          .setPath("/seal/seal/userSignExt")
                           .build();
             StringEntity requestEntity =
                 new StringEntity(data, ContentType.APPLICATION_JSON);
@@ -410,20 +412,16 @@ public class ResumableUploadController {
      * Redirect the page to the specified one.
      *
      */
-    @PostMapping("redirectSign/{urlBase64:.+}")
-    public ResponseEntity<String>
-    redirectSign(@PathVariable String urlBase64,
-                 @RequestBody String jsonStr,
-                 HttpServletResponse response) {
-                     logger.debug(jsonStr);
-        byte[] decoded = null;
+    @PostMapping("redirectSign/{urlEncoded:.+}")
+    public ResponseEntity<String> redirectSign(@PathVariable String urlEncoded,
+                                               @RequestBody String jsonStr,
+                                               HttpServletResponse response) {
+        String url = null;
         try {
-            byte[] bytes = urlBase64.getBytes("UTF-8");
-            decoded = Base64.getDecoder().decode(bytes);
+            url = URLDecoder.decode(urlEncoded, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-        String url = new String(decoded);
         return ResponseEntity.ok()
             .body("<html><script language=\"javascript\">window.location.replace(\"" + url + "\")</script></html>");
     }
@@ -493,7 +491,7 @@ public class ResumableUploadController {
                           .setScheme("http")
                           .setHost(uploadWatcher.getHost())
                           .setPort(uploadWatcher.getSignPort())
-                          .setPath("/seal/userMoreSign")
+                          .setPath("/seal/seal/userMoreSign")
                           .build();
             StringEntity requestEntity =
                 new StringEntity(data, ContentType.APPLICATION_JSON);
@@ -539,6 +537,20 @@ public class ResumableUploadController {
         getSignedFile resp = new Gson().fromJson(jsonStr, getSignedFile.class);
         String doc_no = resp.getdoc_no();
         String pdf = resp.getpdf();
+        byte[] decoded = null;
+        try {
+            byte[] bytes = doc_no.getBytes("UTF-8");
+            decoded = Base64.getDecoder().decode(bytes);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            doc_no = new String(decoded, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            logger.error(e.toString());
+            throw new RuntimeException("Unsupported Encoding filename");
+        }
         logger.info("getting signed file {}", doc_no);
         int p1 = 0;
         int p2 = doc_no.indexOf("_", p1);
@@ -547,21 +559,13 @@ public class ResumableUploadController {
         p2 = doc_no.indexOf("_", p1);
         String fileId = doc_no.substring(p1, p2);
         String filename = doc_no.substring(p2 + 1);
-        byte[] decoded = null;
-        try {
-            byte[] bytes = filename.getBytes("UTF-8");
-            decoded = Base64.getDecoder().decode(bytes);
-        } catch (Exception e) {
-            e.printStackTrace();            
-        }
-        filename = new String(decoded, "UTF-8");
         long timestamp = System.currentTimeMillis();
         String base_dir = UPLOAD_DIR;
         int rnd = this.random.nextInt();
         String filepath =
             new File(base_dir, timestamp + "_" + rnd + "_" + filename)
                 .getAbsolutePath();
-        byte[] decoded = Base64.getDecoder().decode(pdf);
+        decoded = Base64.getDecoder().decode(pdf);
         File writefile = new File(filepath);
         try {
             FileOutputStream fos = new FileOutputStream(writefile);
@@ -603,6 +607,7 @@ public class ResumableUploadController {
         getBatchSignedFile resp = new Gson().fromJson(jsonStr, getBatchSignedFile.class);
         for (getBatchSignedFile.signPdf content : resp.getPdfList()) {
             String doc_no = content.getdoc_no();
+            logger.debug("recieving pdf doc_no {}", doc_no);
             String pdf = content.get_pdf();
             logger.info("getting signed file {}", doc_no);
             int p1 = 0;
@@ -619,14 +624,22 @@ public class ResumableUploadController {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            filename = new String(decoded, "UTF-8");
+            try {
+                filename = new String(decoded, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                response.setStatus(
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                logger.error(e.toString());
+                throw new RuntimeException("Unsupported Encoding filename");
+            }
+            logger.debug("recieving file {}", filename);
             long timestamp = System.currentTimeMillis();
             String base_dir = UPLOAD_DIR;
             int rnd = this.random.nextInt();
             String filepath =
                 new File(base_dir, timestamp + "_" + rnd + "_" + filename)
                     .getAbsolutePath();
-            byte[] decoded = Base64.getDecoder().decode(pdf);
+            decoded = Base64.getDecoder().decode(pdf);
             File writefile = new File(filepath);
             try {
                 FileOutputStream fos = new FileOutputStream(writefile);
@@ -678,7 +691,7 @@ public class ResumableUploadController {
                           .setScheme(uploadWatcher.getScheme())
                           .setHost(uploadWatcher.getHost())
                           .setPort(uploadWatcher.getPort())
-                          .setPath("/update/updateSignFile")
+                          .setPath("/urp/update/updateSignFile")
                           .build();
             logger.debug("File confirming request URI: " + uri.toASCIIString());
             StringEntity requestEntity =
