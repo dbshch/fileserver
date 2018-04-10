@@ -46,6 +46,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.Base64;
 
 /**
@@ -366,7 +367,7 @@ public class ResumableUploadController {
                           .setScheme("http")
                           .setHost(uploadWatcher.getHost())
                           .setPort(uploadWatcher.getSignPort())
-                          .setPath("/seal/userSignExt")
+                          .setPath("/seal/seal/userSignExt")
                           .build();
             StringEntity requestEntity =
                 new StringEntity(data, ContentType.APPLICATION_JSON);
@@ -411,20 +412,16 @@ public class ResumableUploadController {
      * Redirect the page to the specified one.
      *
      */
-    @PostMapping("redirectSign/{urlBase64:.+}")
-    public ResponseEntity<String>
-    redirectSign(@PathVariable String urlBase64,
-                 @RequestBody String jsonStr,
-                 HttpServletResponse response) {
-                     logger.debug(jsonStr);
-        byte[] decoded = null;
+    @PostMapping("redirectSign/{urlEncoded:.+}")
+    public ResponseEntity<String> redirectSign(@PathVariable String urlEncoded,
+                                               @RequestBody String jsonStr,
+                                               HttpServletResponse response) {
+        String url = null;
         try {
-            byte[] bytes = urlBase64.getBytes("UTF-8");
-            decoded = Base64.getDecoder().decode(bytes);
+            url = URLDecoder.decode(urlEncoded, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-        String url = new String(decoded);
         return ResponseEntity.ok()
             .body("<html><script language=\"javascript\">window.location.replace(\"" + url + "\")</script></html>");
     }
@@ -494,7 +491,7 @@ public class ResumableUploadController {
                           .setScheme("http")
                           .setHost(uploadWatcher.getHost())
                           .setPort(uploadWatcher.getSignPort())
-                          .setPath("/seal/userMoreSign")
+                          .setPath("/seal/seal/userMoreSign")
                           .build();
             StringEntity requestEntity =
                 new StringEntity(data, ContentType.APPLICATION_JSON);
